@@ -1,11 +1,196 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+// src/pages/index.astro
 ---
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Catálogo Maestro Hikvision</title>
+    <script is:inline src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script is:inline src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root { --bordo: #800000; --negro: #1a1a1a; --gris: #f4f7f6; }
+        body { background-color: var(--gris); font-family: system-ui, sans-serif; margin: 0; padding: 10px; }
+        .container { width: 100%; max-width: 100%; margin: 0 auto; }
+        .filter-bar { 
+            background: #fff; padding: 15px; border-radius: 8px; 
+            display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.5fr 120px; gap: 10px; 
+            margin-bottom: 15px; border-top: 4px solid var(--bordo); box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+        }
+        .filter-group { display: flex; flex-direction: column; gap: 3px; }
+        .filter-group label { font-weight: bold; font-size: 10px; text-transform: uppercase; color: #555; }
+        .filter-group input, .filter-group select { border: 1px solid #ddd; padding: 8px; border-radius: 4px; font-size: 12px; outline: none; }
+        #btn-excel { background: #1b5e20; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 35px; margin-top: auto; }
+        .paging { display: flex; justify-content: center; align-items: center; gap: 20px; background: #fff; padding: 8px; border-radius: 6px; margin-bottom: 10px; }
+        .nav-btn { background: var(--negro); color: white; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        #page-info { font-weight: bold; font-size: 12px; color: var(--bordo); }
+        .wrapper { width: 100%; overflow-x: auto; background: white; border-radius: 6px; }
+        table { border-collapse: collapse; width: 100%; min-width: 2800px; table-layout: fixed; }
+        thead th { padding: 12px 5px; font-size: 9px; color: #fff; text-align: center; position: sticky; top: 0; z-index: 10; background: var(--negro); }
+        .th-bordo { background-color: var(--bordo) !important; }
+        tbody td { padding: 8px 4px; border-bottom: 1px solid #f0f0f0; text-align: center; font-size: 10px; vertical-align: middle; }
+        .col-mod { text-align: left; font-weight: bold; color: var(--bordo); width: 220px; }
+        .col-tech { text-align: left; font-size: 8.5px; color: #666; width: 250px; white-space: normal; line-height: 1.1; }
+        .img-prod { height: 45px; width: 45px; object-fit: contain; background: #fff; }
+        .p-vta { font-weight: bold; color: #2e7d32; }
+        .no-price { color: #ccc; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="filter-bar">
+            <div class="filter-group"><label>Buscador</label><input type="text" id="buscador" placeholder="Modelo o SAP..."></div>
+            <div class="filter-group"><label>Marca</label><select id="f-marca"><option value="">Todas las Marcas</option></select></div>
+            <div class="filter-group"><label>Línea</label><select id="f-linea"><option value="">Todas las Líneas</option></select></div>
+            <div class="filter-group"><label>Serie</label><select id="f-serie"><option value="">Todas las Series</option></select></div>
+            <button id="btn-excel">EXCEL</button>
+        </div>
 
-<Layout>
-	<Welcome />
-</Layout>
+        <div class="paging">
+            <button id="prev-page" class="nav-btn">Anterior</button>
+            <span id="page-info">Iniciando catálogo...</span>
+            <button id="next-page" class="nav-btn">Siguiente</button>
+        </div>
+
+        <div class="wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th class="th-bordo" style="width: 220px;">MODELO</th>
+                        <th class="th-bordo" style="width: 70px;">FOTO</th>
+                        <th class="th-bordo" style="width: 100px;">MARCA</th>
+                        <th class="th-bordo" style="width: 130px;">LINEA</th>
+                        <th class="th-bordo" style="width: 180px;">SERIE</th>
+                        <th class="th-negro" style="width: 250px;">CARAC. TÉCNICAS</th>
+                        <th class="th-negro" style="width: 80px;">DIAMOND</th>
+                        <th class="th-negro" style="width: 80px;">BLACK</th>
+                        <th class="th-negro" style="width: 80px;">PLATINUM</th>
+                        <th class="th-negro" style="width: 80px;">RUBY</th>
+                        <th class="th-negro" style="width: 80px;">GOLD</th>
+                        <th class="th-negro" style="width: 80px;">FOB BDM</th>
+                        <th class="th-negro" style="width: 80px;">PROY BDM</th>
+                        <th class="th-negro" style="width: 80px;">FOB DIR</th>
+                        <th class="th-negro" style="width: 80px;">PROY DIR</th>
+                        <th class="th-negro" style="width: 100px;">CICLO</th>
+                        <th class="th-negro" style="width: 110px;">SAP CODE</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script is:inline>
+        const { createClient } = window.supabase;
+        const _supabase = createClient('https://wmubdrjqailnizfyxsft.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtdWJkcmpxYWlsbml6Znl4c2Z0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MjA5OTEsImV4cCI6MjA4NDQ5Njk5MX0.Wcc16V3KQGQnrG18o1aZuUDyP3BrqzI8_i0Dht6Qpc4');
+
+        // LISTAS MAESTRAS (Para asegurar que aparezca TODO)
+        const MARCAS_MASTER = ["Hikvision", "HiLook", "Hikmicro", "Ezviz", "Panda"];
+        
+        const LINEAS_MASTER = [
+            "Network Camera", "Turbo HD Camera", "PTZ Camera", "Network Video Recorder", "Digital Video Recorder", 
+            "Transmission", "Display and Control", "Video Intercom", "Access Control", "Alarm", 
+            "Mobile Solutions", "Traffic", "Thermal", "Storage", "Accessories", "Software"
+        ];
+
+        const SERIES_MASTER = ["Accessory Series", "Power Adapter", "Lens", "Camera module series", "Commercial Display Bracket", "Monitor Accessories", "Accessories For Explosion-Proof & Anti-corrosion Series", "Accessories", "Indoor Accessories", "Ultra Series", "Pro Series", "Value Series", "Special Series", "Back-end Accessories", "1080P Lite", "1080P", "HiWatch Series", "3K\\5MP", "Pro Series With AcuSense", "eDVR Series With eSSD", "Hybrid SAN", "Cluster Storage", "Storage-CVR", "Pro  Series", "720P", "IOT Series", "4\\5MP", "Turbo HD Camera with ColorVu", "3K", "WebCam Series", "PTZ Camera Series", "Video Conference series", "Anti-corrosion Series", "Ultra Series(SmartIP)", "Cable-Free Series", "Pro Series(EasyIP)", "Explosion-Proof Series", "Value Camera", "Panoramic Series", "Urban Road ANPR Cameras", "Capture Cameras", "Traffic Flow Cameras", "Container No. Recognition Cameras", "Incident Detection Cameras", "Mobile Enforcement Cameras", "Mobile Enforcement Systems", "Analog PTZ", "Turbo HD PTZ", "Network Dome HiLook Series", "Security Radar", "1080P KIT", "720P KIT", "Turbo HD 720P KIT", "Turbo HD 1080P KIT", "Turbo HD 4MP Lite KIT", "HiWatch PoE Kit", "PoE Kit", "Wi-Fi Kit", "HiWatch Wi-Fi Kit", "PLC Kit", "Cable Accessories", "X86-OEM", "Media Convertor", "Outdoor Wireless Bridge", "Unmanaged Switch", "Smart Managed Switch", "Elevator Wireless Bridge", "Enterprise Campus Switch", "Industrial Switch", "SOHO Switch", "Industrial Power Supplies", "Optical Module", "Video Wall Controller", "Decoder", "Traffic Radar", "Traffic Accessories", "Entrance Accessories", "Entrance & Exit Radar", "Traffic Light Signal Detectors", "Attention Device", "Health Care Radar", "Videowall Controller", "KVM", "MBUS Series", "AX HYBRID Series", "AX PRO Series", "Panic Alarm Box", "Panic Alarm Panel", "Panic Alarm Station", "General Wired Detectors", "AX Hub", "Detector Accessory", "General Wired Sounders", "Common Accessory", "Radar Accessory", "AX HYBRID PRO V1 Series", "AX HOME Series", "Mirror Series", "Indoor LED", "Commercial Monitor", "LED Controller", "LED Control Accessories", "Transparent LED", "Outdoor LED", "Floor Standing Series", "Idle Directory", "Wall-mounted Series", "Digital Signage Servers & Boxes", "Solid Series", "Keyboards", "Bracket", "Junction", "Other", "Housing", "Push Buttons", "Cards", "Enrollers", "Demo Box", "Swing Barriers", "Modules", "Face Recognition Modules for Turnstile", "Fingerprint Product Kits", "Fixed Base", "Optional Components", "Flap Barrier", "Card Modules", "Power Supply", "Tripod Turnstile", "Face Product Kits", "Door Operator", "Accessory Kits", "Brackets", "Card Terminal Kits", "Body Worn Camera Series", "Portable Camera Series", "Full-Screen Enterprie PDAs", "Rugged Tablet", "Key-pad Enterprie PDAs", "Barcode Scanner PDA Accessories", "UHF System", "Barcode Scanner Gun", "Rugged Tablet Series", "Smart Android Mobile Terminal Series", "Pro", "Mobile Accessories", "Network Video Recorders", "Ultra", "Value", "DeepinMind Edge", "Value NVR", "Wi-Fi NVR", "VPro Series", "Stand Pole", "LED Accessory", "Surveillance HDD", "Enterprise HDD", "Network Speaker", "Security Microphone", "Back-up type UPS", "Checkpoint Capture Cameras", "ANPR Cameras", "Intersection Violation Units", "Portable Radar Speed Detectors", "Axle Counting Cameras", "Traffic Servers", "RFID Series", "Smart Servers", "Strobe Supplement Lights", "Flash Supplement Lights", "Continuous Lights", "Power Supplies", "Distributors", "4-Wire", "4-wire Kits", "2 Wire IP", "IP Kits", "2-wire Kits", "2 Wire Analog", "2 Wire HD", "4 Wire Hybrid Series", "Hybrid Intercom Kit", "4 Wire HD Series", "IP Door Station", "IP Indoor Station", "4-Wire Door Station", "Hybrid Indoor Station", "4-Wire Indoor Station", "IP Kit", "Hybrid Kit", "4-Wire Kit", "4-Wire Hybrid HD series", "Hybrid HD Intercom Kit", "SIP Server", "Panic Alarm Master Station", "Bedside Terminal", "Nurse Station", "Bedhead Terminal", "Doorway Terminal", "Emergency Button", "Control Panel", "PT series", "Bullet series", "Special industry series", "Speed dome series", "Turret series", "HeatPro Series", "Thermography HeatPro Series", "Bi-spectrum Speed Dome Series", "Thermography Bi-spectrum Speed Dome Series", "Bi-spectrum PT Series", "Side Fence", "Door Accessories", "Door Station Accessories", "Emergency Alarm Accessories", "Signal Controllers", "Traffic Lights", "Entrance & Exit LED Screens", "Parking Guidance LED Screens", "Barrier Gates", "Parking Inquiry Machines", "Parking Servers", "Parking Guidance Cameras", "DeepinMind Server", "VMS Server (old)", "Copper Cables", "Coaxial Cables", "Patch cord", "Copper Cable", "Alarm Cables", "Fiber Cables", "Fiber Accessories", "Mobile Enforcement Accessories", "RFID Cards", "Industry Dash Camera", "Consumer Dashcam", "Fixed series", "Box Cameras", "Cube Cameras", "Heat-resistant Cameras", "TS16", "Automotive series", "Handheld series", "Scope series", "OWL", "THUNDER", "LYNX Pro", "LYNX", "THUNDER Pro", "GRYPHON LRF", "PANTHER LRF", "GRYPHON", "STELLAR", "ALPEX", "EXPLORER", "FALCON", "CHEETAH Scope", "CHEETAH Clip-On", "RAPTOR", "HEIMDAL", "THUNDER 2.0", "Trail Camera", "THUNDER ZOOM", "CONDOR", "LYNX 2.0", "HABROK 4K", "HAWK", "STELLAR 2.0", "HABROK Pro", "STELLAR 3.0", "THUNDER 3.0", "FALCON 2.0", "ALPEX Lite", "LYNX 3.0", "HABROK 4K 2.0", "Temperature Sceening Series", "Mini Series", "B Series", "G Series", "E Series", "M Series", "Pocket Series", "SP Series", "FT Series", "FB Series", "Acoustic Leak Detectors", "FP Series", "Acoustic Imaging Cameras", "Mobile Analog Camera", "Mobile Network Camera", "Consumer Accessory", "Electronic Accessory", "Cable", "Mechanical Accessory", "Accessory", "E-Mirror", "Backend Products Accessories", "General Purpose Server (old)", "General Purpose Server", "VMS Server", "DeepinView Series", "Retail Products", "Solar-powered Security Camera Setup", "PT Cameras", "Active Infrared", "Electronic Fence", "Intelligent Vehicle Terminal", "Mobile AI Network Camera", "All-in-One Series", "Cabinet", "Online UPS", "Adapter", "Eyepiece", "Rail", "Battery Chargers", "Interchangeable Batteries", "Lenses", "IR Torch", "IR Torch Bracket", "Battery", "Pouches", "Ring", "CV-Accessory Series", "Charger", "Monocular Monitor Screen", "Solar Panel", "Binocular Harness", "Monocular Pouch", "AX HYBRID PRO G2 Series", "Remote Controller", "Full Height Turnstile", "Swing Gate", "Spare parts", "ESD Solutions", "Sliding gate opener", "Detectors", "Digital Video Recorders", "Entrance & Exit Control Terminals", "Entrance & Exit Controllers", "Parking Indicators", "On-Street Parking Cameras", "All-in-One Entrance & Exit Manager", "Parking Terminal", "Payment Machines", "Geomagnetic Management System", "Sliding Gate Motor", "Tire Spike Strip", "Entrance & Exit Signal Light", "Wall-mounted AC Charging Station", "Portable AC Charger", "All-in-one DC Charging Station", "HF-Link Series", "Metal Detectors", "X-Ray Screening", "Addressable FAS", "360 AVM System", "Commercial Display Accessories", "Rental LED", "LED module for First Vision", "Indoor Module", "Aries Series", "Flex Series", "54\" LED Splicing Screen", "LED AIO", "LumiFit Series", "LumiSquare Series", "LED Poster", "LumiValue Series", "Outdoor Module", "Normal LED Module for Outdoor Series", "Flexible Module", "Solid Plus Series", "LumiUltra Series", "Wi-Fi Router", "4G\\5G Router", "Wall Mount AP", "Celling AP", "Outdoor AP", "Smart Managed Router", "Wi-Fi Extender", "Wi-Fi Adapter", "Gaming Monitor", "Class Board", "Blackboard Series", "Water Level & Flow Radar", "Imaging Radar", "Level Meter Radar", "Obstacle Avoidance Radar", "Industrial Radar Terminal", "Performance Series", "Select Series", "Conference Series", "Intelligent security analyzer", "Maintenance Accessories of Security Inspection System", "Liquid Detection Equipment", "Security Inspection of peripheral products", "Millimeter Wave Person Security Inspection System", "Gas Leakage Monitoring", "Analog Speaker", "Amplifier", "Pro Speakers", "Positioning product", "Independent Series", "Smoke Series", "Heat Series", "Flame Series", "Conventional FAS", "Muti-Sensor Series", "Fiber Optic Sensing", "Pyrometer", "Media Server", "Paging Microphone", "Audio Kit", "Audio Processor", "Mixer Console", "Pro Microphone", "Public Address Accessories", "Public Address and Voice Alarm system", "Pro Amplifier", "Visible Audio", "Server Others", "Electric Vehicle Charging Station Accessories", "iVMS-5200 ANPR System", "iVMS-5200 Professional", "iVMS-5200 Mobile Surveillance", "HikCentral Professional", "HikCentral Master", "HikCentral Enterprise", "HikCentral iVisual", "HikCentral Optimus", "HikCentral Lite", "Parking Management Software", "Hik-Partner Pro(Hik-ProConnect)", "Hik-Connect", "HikCentral Connect"];
+
+        const tbody = document.getElementById('tabla-body');
+        const pageInfo = document.getElementById('page-info');
+        const btnPrev = document.getElementById('prev-page');
+        const btnNext = document.getElementById('next-page');
+        const fSerie = document.getElementById('f-serie');
+        const fMarca = document.getElementById('f-marca');
+        const fLinea = document.getElementById('f-linea');
+        const searchInput = document.getElementById('buscador');
+
+        let page = 0;
+        const size = 15;
+
+        const formatP = (v) => {
+            const num = parseFloat(v);
+            return (num > 0) ? `$${num.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : `<span class="no-price">-</span>`;
+        };
+
+        function buildQuery() {
+            let q = _supabase.from('productos').select('*', { count: 'exact' }).not('modelo', 'is', null).neq('modelo', '');
+            
+            if (searchInput instanceof HTMLInputElement && searchInput.value) {
+                const t = searchInput.value.trim();
+                q = q.or(`modelo.ilike.%${t}%,sap.ilike.%${t}%`);
+            }
+            if (fMarca instanceof HTMLSelectElement && fMarca.value) q = q.eq('marca', fMarca.value);
+            if (fLinea instanceof HTMLSelectElement && fLinea.value) q = q.eq('linea', fLinea.value);
+            if (fSerie instanceof HTMLSelectElement && fSerie.value) q = q.eq('serie', fSerie.value);
+            
+            return q;
+        }
+
+        async function load() {
+            const { data, count, error } = await buildQuery().order('modelo', { ascending: true }).range(page * size, (page * size) + size - 1);
+            
+            if (error) { console.error("Error Supabase:", error); return; }
+            if (data && tbody) {
+                tbody.innerHTML = data.map(p => `
+                    <tr>
+                        <td class="col-mod">${p.modelo}</td>
+                        <td><img class="img-prod" src="https://wmubdrjqailnizfyxsft.supabase.co/storage/v1/object/public/Fotos%20-%20Productos/${p.sap}.jpg" onerror="this.src='https://placehold.co/45x45?text=N/A'"></td>
+                        <td>${p.marca || '-'}</td>
+                        <td>${p.linea || '-'}</td>
+                        <td>${p.serie || '-'}</td>
+                        <td class="col-tech">${p.carac_tecnicas || '-'}</td>
+                        <td class="p-vta">${formatP(p.price_diamond)}</td>
+                        <td class="p-vta">${formatP(p.price_black)}</td>
+                        <td class="p-vta">${formatP(p.price_platinum)}</td>
+                        <td class="p-vta">${formatP(p.price_ruby)}</td>
+                        <td class="p-vta">${formatP(p.price_gold)}</td>
+                        <td class="p-vta">${formatP(p.fob_bdm)}</td>
+                        <td class="p-vta">${formatP(p.proy_bdm)}</td>
+                        <td class="p-vta">${formatP(p.fob_dir)}</td>
+                        <td class="p-vta">${formatP(p.proy_dir)}</td>
+                        <td>${p.ciclo_de_vida || '-'}</td>
+                        <td style="font-weight:bold;">${p.sap || '-'}</td>
+                    </tr>
+                `).join('');
+
+                const total = count || 0;
+                if (pageInfo) pageInfo.innerText = `Mostrando ${(page * size) + 1} - ${Math.min((page * size) + size, total)} de ${total}`;
+                if (btnPrev instanceof HTMLButtonElement) btnPrev.disabled = page === 0;
+                if (btnNext instanceof HTMLButtonElement) btnNext.disabled = ((page * size) + size) >= total;
+            }
+        }
+
+        function initFilters() {
+            // Llenar Marca
+            if (fMarca instanceof HTMLSelectElement) {
+                fMarca.innerHTML = '<option value="">Todas las Marcas</option>' + 
+                    MARCAS_MASTER.sort().map(m => `<option value="${m}">${m}</option>`).join('');
+            }
+            // Llenar Línea
+            if (fLinea instanceof HTMLSelectElement) {
+                fLinea.innerHTML = '<option value="">Todas las Líneas</option>' + 
+                    LINEAS_MASTER.sort().map(l => `<option value="${l}">${l}</option>`).join('');
+            }
+            // Llenar Serie
+            if (fSerie instanceof HTMLSelectElement) {
+                const sorted = [...new Set(SERIES_MASTER)].sort();
+                fSerie.innerHTML = '<option value="">Todas las Series</option>' + 
+                    sorted.map(s => `<option value="${s}">${s}</option>`).join('');
+            }
+        }
+
+        const resetAndLoad = () => { page = 0; load(); };
+
+        if (searchInput) searchInput.addEventListener('input', resetAndLoad);
+        [fMarca, fLinea, fSerie].forEach(el => {
+            if (el) el.addEventListener('change', resetAndLoad);
+        });
+
+        if (btnPrev) btnPrev.addEventListener('click', () => { if (page > 0) { page--; load(); } });
+        if (btnNext) btnNext.addEventListener('click', () => { page++; load(); });
+
+        initFilters();
+        load();
+    </script>
+</body>
+</html>
