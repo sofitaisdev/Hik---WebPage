@@ -4,193 +4,538 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Catálogo Maestro Hikvision</title>
     <script is:inline src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script is:inline src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
         :root { --bordo: #800000; --negro: #1a1a1a; --gris: #f4f7f6; }
+        * { box-sizing: border-box; }
         body { background-color: var(--gris); font-family: system-ui, sans-serif; margin: 0; padding: 10px; }
         .container { width: 100%; max-width: 100%; margin: 0 auto; }
-        .filter-bar { 
-            background: #fff; padding: 15px; border-radius: 8px; 
-            display: grid; grid-template-columns: 1.5fr 1fr 1fr 1.5fr 120px; gap: 10px; 
-            margin-bottom: 15px; border-top: 4px solid var(--bordo); box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+
+        /* ── FILTER BAR (formato original) ── */
+        .filter-bar {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr 1.5fr 120px;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-top: 4px solid var(--bordo);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            align-items: end;
         }
         .filter-group { display: flex; flex-direction: column; gap: 3px; }
         .filter-group label { font-weight: bold; font-size: 10px; text-transform: uppercase; color: #555; }
-        .filter-group input, .filter-group select { border: 1px solid #ddd; padding: 8px; border-radius: 4px; font-size: 12px; outline: none; }
-        #btn-excel { background: #1b5e20; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; height: 35px; margin-top: auto; }
-        .paging { display: flex; justify-content: center; align-items: center; gap: 20px; background: #fff; padding: 8px; border-radius: 6px; margin-bottom: 10px; }
-        .nav-btn { background: var(--negro); color: white; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .filter-group input {
+            border: 1px solid #ddd; padding: 8px; border-radius: 4px;
+            font-size: 12px; outline: none; height: 35px; width: 100%;
+        }
+        .filter-group input:focus { border-color: var(--bordo); }
+
+        /* ── DROPDOWN CHECKBOXES ── */
+        .dropdown-wrap { position: relative; }
+        .dropdown-trigger {
+            border: 1px solid #ddd; padding: 0 8px; border-radius: 4px;
+            font-size: 12px; height: 35px; display: flex; align-items: center;
+            justify-content: space-between; cursor: pointer; background: #fff;
+            user-select: none; gap: 6px; width: 100%;
+        }
+        .dropdown-trigger:hover { border-color: #aaa; }
+        .trigger-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #333; }
+        .trigger-arrow { font-size: 9px; color: #888; flex-shrink: 0; transition: transform 0.2s; }
+        .trigger-arrow.open { transform: rotate(180deg); }
+        .trigger-count {
+            background: var(--bordo); color: #fff; border-radius: 10px;
+            font-size: 9px; padding: 1px 5px; flex-shrink: 0;
+        }
+
+        .dropdown-panel {
+            display: none; position: absolute; top: 38px; left: 0;
+            min-width: 100%; width: max-content; max-width: 340px;
+            background: #fff; border: 1px solid #ddd; border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.13); z-index: 200; padding: 6px 0;
+        }
+        .dropdown-panel.open { display: block; }
+
+        .dp-search { padding: 5px 10px 7px 10px; border-bottom: 1px solid #f0f0f0; }
+        .dp-search input {
+            width: 100%; border: 1px solid #ddd; border-radius: 4px;
+            padding: 4px 8px; font-size: 11px; outline: none;
+        }
+        .dp-search input:focus { border-color: var(--bordo); }
+
+        .dp-selall {
+            display: flex; align-items: center; gap: 7px;
+            padding: 5px 10px; border-bottom: 1px dashed #eee; cursor: pointer;
+        }
+        .dp-selall:hover { background: #fafafa; }
+        .dp-selall label { font-size: 11px; font-weight: 600; color: #666; cursor: pointer; }
+
+        .dp-list { max-height: 200px; overflow-y: auto; padding: 4px 0; }
+        .dp-list::-webkit-scrollbar { width: 4px; }
+        .dp-list::-webkit-scrollbar-thumb { background: #ddd; border-radius: 2px; }
+
+        .dp-item { display: flex; align-items: center; gap: 7px; padding: 4px 10px; cursor: pointer; }
+        .dp-item:hover { background: #f8f8f8; }
+        .dp-item input[type="checkbox"] {
+            accent-color: var(--bordo); width: 13px; height: 13px; flex-shrink: 0; cursor: pointer;
+        }
+        .dp-item label { font-size: 11px; color: #333; cursor: pointer; white-space: nowrap; }
+
+        #btn-excel {
+            background: #1b5e20; color: white; border: none; border-radius: 4px;
+            cursor: pointer; font-weight: bold; height: 35px; width: 100%;
+        }
+        #btn-excel:hover { background: #2e7d32; }
+
+        /* ── PAGING (formato original) ── */
+        .paging {
+            display: flex; justify-content: center; align-items: center;
+            gap: 20px; background: #fff; padding: 8px; border-radius: 6px; margin-bottom: 10px;
+        }
+        .nav-btn {
+            background: var(--negro); color: white; border: none;
+            padding: 6px 15px; border-radius: 4px; cursor: pointer; font-size: 12px;
+        }
         .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
         #page-info { font-weight: bold; font-size: 12px; color: var(--bordo); }
+
+        /* ── TABLE (formato original) ── */
         .wrapper { width: 100%; overflow-x: auto; background: white; border-radius: 6px; }
-        table { border-collapse: collapse; width: 100%; min-width: 2800px; table-layout: fixed; }
-        thead th { padding: 12px 5px; font-size: 9px; color: #fff; text-align: center; position: sticky; top: 0; z-index: 10; background: var(--negro); }
+        table { border-collapse: collapse; width: 100%; min-width: 1300px; table-layout: fixed; }
+        thead th {
+            padding: 12px 5px; font-size: 9px; color: #fff; text-align: center;
+            position: sticky; top: 0; z-index: 10; background: var(--negro);
+        }
         .th-bordo { background-color: var(--bordo) !important; }
-        tbody td { padding: 8px 4px; border-bottom: 1px solid #f0f0f0; text-align: center; font-size: 10px; vertical-align: middle; }
-        .col-mod { text-align: left; font-weight: bold; color: var(--bordo); width: 220px; }
-        .col-tech { text-align: left; font-size: 8.5px; color: #666; width: 250px; white-space: normal; line-height: 1.1; }
+        tbody td {
+            padding: 8px 4px; border-bottom: 1px solid #f0f0f0;
+            text-align: center; font-size: 10px; vertical-align: middle;
+        }
+        .col-mod { text-align: left; font-weight: bold; color: var(--bordo); }
+        .col-tech { text-align: left; font-size: 8.5px; color: #666; white-space: normal; line-height: 1.1; }
         .img-prod { height: 45px; width: 45px; object-fit: contain; background: #fff; }
         .p-vta { font-weight: bold; color: #2e7d32; }
         .no-price { color: #ccc; }
+        .empty-msg td { text-align: center; padding: 30px; color: #aaa; font-style: italic; }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.45); z-index: 1000;
+            align-items: center; justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #fff; border-radius: 10px; padding: 28px 32px;
+            width: 300px; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        }
+        .modal h3 { font-size: 16px; font-weight: bold; margin-bottom: 6px; color: var(--negro); }
+        .modal p  { font-size: 12px; color: #666; margin-bottom: 18px; }
+        .modal-btns { display: flex; gap: 10px; margin-bottom: 8px; }
+        .modal-btn {
+            flex: 1; padding: 10px 0; border: none; border-radius: 6px;
+            font-size: 14px; font-weight: bold; cursor: pointer;
+        }
+        .modal-btn:hover { opacity: 0.85; }
+        .btn-csv  { background: var(--negro); color: #fff; }
+        .btn-xlsx { background: #1b5e20; color: #fff; }
+        .btn-cancel {
+            width: 100%; background: #f0f0f0; color: #555; border: none;
+            border-radius: 6px; padding: 7px 0; cursor: pointer; font-size: 12px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="filter-bar">
-            <div class="filter-group"><label>Buscador</label><input type="text" id="buscador" placeholder="Modelo o SAP..."></div>
-            <div class="filter-group"><label>Marca</label><select id="f-marca"><option value="">Todas las Marcas</option></select></div>
-            <div class="filter-group"><label>Línea</label><select id="f-linea"><option value="">Todas las Líneas</option></select></div>
-            <div class="filter-group"><label>Serie</label><select id="f-serie"><option value="">Todas las Series</option></select></div>
-            <button id="btn-excel">EXCEL</button>
+<div class="container">
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label>Buscador</label>
+            <input type="text" id="buscador" placeholder="Modelo o SAP...">
         </div>
 
-        <div class="paging">
-            <button id="prev-page" class="nav-btn">Anterior</button>
-            <span id="page-info">Iniciando catálogo...</span>
-            <button id="next-page" class="nav-btn">Siguiente</button>
+        <div class="filter-group">
+            <label>Marca</label>
+            <div class="dropdown-wrap">
+                <div class="dropdown-trigger" id="dt-marca">
+                    <span class="trigger-label">Todas las Marcas</span>
+                    <span class="trigger-arrow" id="ta-marca">▼</span>
+                </div>
+                <div class="dropdown-panel" id="dp-marca"></div>
+            </div>
         </div>
 
-        <div class="wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th class="th-bordo" style="width: 220px;">MODELO</th>
-                        <th class="th-bordo" style="width: 70px;">FOTO</th>
-                        <th class="th-bordo" style="width: 100px;">MARCA</th>
-                        <th class="th-bordo" style="width: 130px;">LINEA</th>
-                        <th class="th-bordo" style="width: 180px;">SERIE</th>
-                        <th class="th-negro" style="width: 250px;">CARAC. TÉCNICAS</th>
-                        <th class="th-negro" style="width: 80px;">DIAMOND</th>
-                        <th class="th-negro" style="width: 80px;">BLACK</th>
-                        <th class="th-negro" style="width: 80px;">PLATINUM</th>
-                        <th class="th-negro" style="width: 80px;">RUBY</th>
-                        <th class="th-negro" style="width: 80px;">GOLD</th>
-                        <th class="th-negro" style="width: 80px;">FOB BDM</th>
-                        <th class="th-negro" style="width: 80px;">PROY BDM</th>
-                        <th class="th-negro" style="width: 80px;">FOB DIR</th>
-                        <th class="th-negro" style="width: 80px;">PROY DIR</th>
-                        <th class="th-negro" style="width: 100px;">CICLO</th>
-                        <th class="th-negro" style="width: 110px;">SAP CODE</th>
-                    </tr>
-                </thead>
-                <tbody id="tabla-body"></tbody>
-            </table>
+        <div class="filter-group">
+            <label>Línea</label>
+            <div class="dropdown-wrap">
+                <div class="dropdown-trigger" id="dt-linea">
+                    <span class="trigger-label">Todas las Líneas</span>
+                    <span class="trigger-arrow" id="ta-linea">▼</span>
+                </div>
+                <div class="dropdown-panel" id="dp-linea"></div>
+            </div>
         </div>
+
+        <div class="filter-group">
+            <label>Serie</label>
+            <div class="dropdown-wrap">
+                <div class="dropdown-trigger" id="dt-serie">
+                    <span class="trigger-label">Todas las Series</span>
+                    <span class="trigger-arrow" id="ta-serie">▼</span>
+                </div>
+                <div class="dropdown-panel" id="dp-serie"></div>
+            </div>
+        </div>
+
+        <button id="btn-excel">EXCEL</button>
     </div>
 
-    <script is:inline>
-        const { createClient } = window.supabase;
-        const _supabase = createClient('https://wmubdrjqailnizfyxsft.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtdWJkcmpxYWlsbml6Znl4c2Z0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MjA5OTEsImV4cCI6MjA4NDQ5Njk5MX0.Wcc16V3KQGQnrG18o1aZuUDyP3BrqzI8_i0Dht6Qpc4');
+    <!-- PAGING -->
+    <div class="paging">
+        <button id="prev-page" class="nav-btn">Anterior</button>
+        <span id="page-info">Iniciando catálogo...</span>
+        <button id="next-page" class="nav-btn">Siguiente</button>
+    </div>
 
-        // LISTAS MAESTRAS (Para asegurar que aparezca TODO)
-        const MARCAS_MASTER = ["Hikvision", "HiLook", "Hikmicro", "Ezviz", "Panda"];
-        
-        const LINEAS_MASTER = [
-            "Network Camera", "Turbo HD Camera", "PTZ Camera", "Network Video Recorder", "Digital Video Recorder", 
-            "Transmission", "Display and Control", "Video Intercom", "Access Control", "Alarm", 
-            "Mobile Solutions", "Traffic", "Thermal", "Storage", "Accessories", "Software"
-        ];
+    <!-- TABLE -->
+    <div class="wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th class="th-bordo" style="width:200px;">MODELO</th>
+                    <th class="th-bordo" style="width:65px;">FOTO</th>
+                    <th class="th-bordo" style="width:90px;">MARCA</th>
+                    <th class="th-bordo" style="width:130px;">LINEA</th>
+                    <th class="th-bordo" style="width:150px;">SERIE</th>
+                    <th style="width:220px; text-align:left; padding-left:6px;">CARAC. TÉCNICAS</th>
+                    <th style="width:85px;">DIAMOND</th>
+                    <th style="width:85px;">PLATINUM</th>
+                    <th style="width:85px;">RUBY</th>
+                    <th style="width:85px;">BLACK</th>
+                    <th style="width:85px;">GOLD</th>
+                    <th style="width:100px;">SAP CODE</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-body">
+                <tr class="empty-msg"><td colspan="12">Cargando productos...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
 
-        const SERIES_MASTER = ["Accessory Series", "Power Adapter", "Lens", "Camera module series", "Commercial Display Bracket", "Monitor Accessories", "Accessories For Explosion-Proof & Anti-corrosion Series", "Accessories", "Indoor Accessories", "Ultra Series", "Pro Series", "Value Series", "Special Series", "Back-end Accessories", "1080P Lite", "1080P", "HiWatch Series", "3K\\5MP", "Pro Series With AcuSense", "eDVR Series With eSSD", "Hybrid SAN", "Cluster Storage", "Storage-CVR", "Pro  Series", "720P", "IOT Series", "4\\5MP", "Turbo HD Camera with ColorVu", "3K", "WebCam Series", "PTZ Camera Series", "Video Conference series", "Anti-corrosion Series", "Ultra Series(SmartIP)", "Cable-Free Series", "Pro Series(EasyIP)", "Explosion-Proof Series", "Value Camera", "Panoramic Series", "Urban Road ANPR Cameras", "Capture Cameras", "Traffic Flow Cameras", "Container No. Recognition Cameras", "Incident Detection Cameras", "Mobile Enforcement Cameras", "Mobile Enforcement Systems", "Analog PTZ", "Turbo HD PTZ", "Network Dome HiLook Series", "Security Radar", "1080P KIT", "720P KIT", "Turbo HD 720P KIT", "Turbo HD 1080P KIT", "Turbo HD 4MP Lite KIT", "HiWatch PoE Kit", "PoE Kit", "Wi-Fi Kit", "HiWatch Wi-Fi Kit", "PLC Kit", "Cable Accessories", "X86-OEM", "Media Convertor", "Outdoor Wireless Bridge", "Unmanaged Switch", "Smart Managed Switch", "Elevator Wireless Bridge", "Enterprise Campus Switch", "Industrial Switch", "SOHO Switch", "Industrial Power Supplies", "Optical Module", "Video Wall Controller", "Decoder", "Traffic Radar", "Traffic Accessories", "Entrance Accessories", "Entrance & Exit Radar", "Traffic Light Signal Detectors", "Attention Device", "Health Care Radar", "Videowall Controller", "KVM", "MBUS Series", "AX HYBRID Series", "AX PRO Series", "Panic Alarm Box", "Panic Alarm Panel", "Panic Alarm Station", "General Wired Detectors", "AX Hub", "Detector Accessory", "General Wired Sounders", "Common Accessory", "Radar Accessory", "AX HYBRID PRO V1 Series", "AX HOME Series", "Mirror Series", "Indoor LED", "Commercial Monitor", "LED Controller", "LED Control Accessories", "Transparent LED", "Outdoor LED", "Floor Standing Series", "Idle Directory", "Wall-mounted Series", "Digital Signage Servers & Boxes", "Solid Series", "Keyboards", "Bracket", "Junction", "Other", "Housing", "Push Buttons", "Cards", "Enrollers", "Demo Box", "Swing Barriers", "Modules", "Face Recognition Modules for Turnstile", "Fingerprint Product Kits", "Fixed Base", "Optional Components", "Flap Barrier", "Card Modules", "Power Supply", "Tripod Turnstile", "Face Product Kits", "Door Operator", "Accessory Kits", "Brackets", "Card Terminal Kits", "Body Worn Camera Series", "Portable Camera Series", "Full-Screen Enterprie PDAs", "Rugged Tablet", "Key-pad Enterprie PDAs", "Barcode Scanner PDA Accessories", "UHF System", "Barcode Scanner Gun", "Rugged Tablet Series", "Smart Android Mobile Terminal Series", "Pro", "Mobile Accessories", "Network Video Recorders", "Ultra", "Value", "DeepinMind Edge", "Value NVR", "Wi-Fi NVR", "VPro Series", "Stand Pole", "LED Accessory", "Surveillance HDD", "Enterprise HDD", "Network Speaker", "Security Microphone", "Back-up type UPS", "Checkpoint Capture Cameras", "ANPR Cameras", "Intersection Violation Units", "Portable Radar Speed Detectors", "Axle Counting Cameras", "Traffic Servers", "RFID Series", "Smart Servers", "Strobe Supplement Lights", "Flash Supplement Lights", "Continuous Lights", "Power Supplies", "Distributors", "4-Wire", "4-wire Kits", "2 Wire IP", "IP Kits", "2-wire Kits", "2 Wire Analog", "2 Wire HD", "4 Wire Hybrid Series", "Hybrid Intercom Kit", "4 Wire HD Series", "IP Door Station", "IP Indoor Station", "4-Wire Door Station", "Hybrid Indoor Station", "4-Wire Indoor Station", "IP Kit", "Hybrid Kit", "4-Wire Kit", "4-Wire Hybrid HD series", "Hybrid HD Intercom Kit", "SIP Server", "Panic Alarm Master Station", "Bedside Terminal", "Nurse Station", "Bedhead Terminal", "Doorway Terminal", "Emergency Button", "Control Panel", "PT series", "Bullet series", "Special industry series", "Speed dome series", "Turret series", "HeatPro Series", "Thermography HeatPro Series", "Bi-spectrum Speed Dome Series", "Thermography Bi-spectrum Speed Dome Series", "Bi-spectrum PT Series", "Side Fence", "Door Accessories", "Door Station Accessories", "Emergency Alarm Accessories", "Signal Controllers", "Traffic Lights", "Entrance & Exit LED Screens", "Parking Guidance LED Screens", "Barrier Gates", "Parking Inquiry Machines", "Parking Servers", "Parking Guidance Cameras", "DeepinMind Server", "VMS Server (old)", "Copper Cables", "Coaxial Cables", "Patch cord", "Copper Cable", "Alarm Cables", "Fiber Cables", "Fiber Accessories", "Mobile Enforcement Accessories", "RFID Cards", "Industry Dash Camera", "Consumer Dashcam", "Fixed series", "Box Cameras", "Cube Cameras", "Heat-resistant Cameras", "TS16", "Automotive series", "Handheld series", "Scope series", "OWL", "THUNDER", "LYNX Pro", "LYNX", "THUNDER Pro", "GRYPHON LRF", "PANTHER LRF", "GRYPHON", "STELLAR", "ALPEX", "EXPLORER", "FALCON", "CHEETAH Scope", "CHEETAH Clip-On", "RAPTOR", "HEIMDAL", "THUNDER 2.0", "Trail Camera", "THUNDER ZOOM", "CONDOR", "LYNX 2.0", "HABROK 4K", "HAWK", "STELLAR 2.0", "HABROK Pro", "STELLAR 3.0", "THUNDER 3.0", "FALCON 2.0", "ALPEX Lite", "LYNX 3.0", "HABROK 4K 2.0", "Temperature Sceening Series", "Mini Series", "B Series", "G Series", "E Series", "M Series", "Pocket Series", "SP Series", "FT Series", "FB Series", "Acoustic Leak Detectors", "FP Series", "Acoustic Imaging Cameras", "Mobile Analog Camera", "Mobile Network Camera", "Consumer Accessory", "Electronic Accessory", "Cable", "Mechanical Accessory", "Accessory", "E-Mirror", "Backend Products Accessories", "General Purpose Server (old)", "General Purpose Server", "VMS Server", "DeepinView Series", "Retail Products", "Solar-powered Security Camera Setup", "PT Cameras", "Active Infrared", "Electronic Fence", "Intelligent Vehicle Terminal", "Mobile AI Network Camera", "All-in-One Series", "Cabinet", "Online UPS", "Adapter", "Eyepiece", "Rail", "Battery Chargers", "Interchangeable Batteries", "Lenses", "IR Torch", "IR Torch Bracket", "Battery", "Pouches", "Ring", "CV-Accessory Series", "Charger", "Monocular Monitor Screen", "Solar Panel", "Binocular Harness", "Monocular Pouch", "AX HYBRID PRO G2 Series", "Remote Controller", "Full Height Turnstile", "Swing Gate", "Spare parts", "ESD Solutions", "Sliding gate opener", "Detectors", "Digital Video Recorders", "Entrance & Exit Control Terminals", "Entrance & Exit Controllers", "Parking Indicators", "On-Street Parking Cameras", "All-in-One Entrance & Exit Manager", "Parking Terminal", "Payment Machines", "Geomagnetic Management System", "Sliding Gate Motor", "Tire Spike Strip", "Entrance & Exit Signal Light", "Wall-mounted AC Charging Station", "Portable AC Charger", "All-in-one DC Charging Station", "HF-Link Series", "Metal Detectors", "X-Ray Screening", "Addressable FAS", "360 AVM System", "Commercial Display Accessories", "Rental LED", "LED module for First Vision", "Indoor Module", "Aries Series", "Flex Series", "54\" LED Splicing Screen", "LED AIO", "LumiFit Series", "LumiSquare Series", "LED Poster", "LumiValue Series", "Outdoor Module", "Normal LED Module for Outdoor Series", "Flexible Module", "Solid Plus Series", "LumiUltra Series", "Wi-Fi Router", "4G\\5G Router", "Wall Mount AP", "Celling AP", "Outdoor AP", "Smart Managed Router", "Wi-Fi Extender", "Wi-Fi Adapter", "Gaming Monitor", "Class Board", "Blackboard Series", "Water Level & Flow Radar", "Imaging Radar", "Level Meter Radar", "Obstacle Avoidance Radar", "Industrial Radar Terminal", "Performance Series", "Select Series", "Conference Series", "Intelligent security analyzer", "Maintenance Accessories of Security Inspection System", "Liquid Detection Equipment", "Security Inspection of peripheral products", "Millimeter Wave Person Security Inspection System", "Gas Leakage Monitoring", "Analog Speaker", "Amplifier", "Pro Speakers", "Positioning product", "Independent Series", "Smoke Series", "Heat Series", "Flame Series", "Conventional FAS", "Muti-Sensor Series", "Fiber Optic Sensing", "Pyrometer", "Media Server", "Paging Microphone", "Audio Kit", "Audio Processor", "Mixer Console", "Pro Microphone", "Public Address Accessories", "Public Address and Voice Alarm system", "Pro Amplifier", "Visible Audio", "Server Others", "Electric Vehicle Charging Station Accessories", "iVMS-5200 ANPR System", "iVMS-5200 Professional", "iVMS-5200 Mobile Surveillance", "HikCentral Professional", "HikCentral Master", "HikCentral Enterprise", "HikCentral iVisual", "HikCentral Optimus", "HikCentral Lite", "Parking Management Software", "Hik-Partner Pro(Hik-ProConnect)", "Hik-Connect", "HikCentral Connect"];
+<!-- MODAL EXPORTAR -->
+<div class="modal-overlay" id="modal-export">
+    <div class="modal">
+        <h3>Exportar búsqueda</h3>
+        <p>Elegí el formato para descargar los resultados actuales.</p>
+        <div class="modal-btns">
+            <button class="modal-btn btn-csv"  id="do-csv">CSV</button>
+            <button class="modal-btn btn-xlsx" id="do-xlsx">EXCEL</button>
+        </div>
+        <button class="btn-cancel" id="modal-cancel">Cancelar</button>
+    </div>
+</div>
 
-        const tbody = document.getElementById('tabla-body');
-        const pageInfo = document.getElementById('page-info');
-        const btnPrev = document.getElementById('prev-page');
-        const btnNext = document.getElementById('next-page');
-        const fSerie = document.getElementById('f-serie');
-        const fMarca = document.getElementById('f-marca');
-        const fLinea = document.getElementById('f-linea');
-        const searchInput = document.getElementById('buscador');
+<script is:inline>
+(() => {
+    const { createClient } = window.supabase;
+    const _sb = createClient(
+        'https://wmubdrjqailnizfyxsft.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndtdWJkcmpxYWlsbml6Znl4c2Z0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5MjA5OTEsImV4cCI6MjA4NDQ5Njk5MX0.Wcc16V3KQGQnrG18o1aZuUDyP3BrqzI8_i0Dht6Qpc4'
+    );
 
-        let page = 0;
-        const size = 15;
+    const OPTS = {
+        marca: ["Ezviz","HiLook","Hikmicro","Hikvision","Panda"],
+        linea: ["Access Control","Accessories","Alarm","Digital Video Recorder","Display and Control","Mobile Solutions","Network Camera","Network Video Recorder","PTZ Camera","Software","Storage","Thermal","Traffic","Transmission","Turbo HD Camera","Video Intercom"],
+        serie: ["1080P","1080P KIT","1080P Lite","2 Wire Analog","2 Wire HD","2 Wire IP","2-wire Kits","3K","3K\\5MP","4 Wire HD Series","4 Wire Hybrid Series","4-Wire","4-Wire Door Station","4-Wire Indoor Station","4-Wire Kit","4-Wire Kits","4\\5MP","720P","720P KIT","AX HOME Series","AX Hub","AX HYBRID PRO G2 Series","AX HYBRID PRO V1 Series","AX HYBRID Series","AX PRO Series","Accessory","Accessory Kits","Accessory Series","Anti-corrosion Series","Analog PTZ","Back-end Accessories","Back-up type UPS","Body Worn Camera Series","Box Cameras","Bracket","Brackets","Bullet series","Cable Accessories","Cable-Free Series","Cards","Commercial Monitor","Control Panel","DeepinMind Edge","DeepinMind Server","Decoder","Demo Box","Detector Accessory","Door Operator","Enterprise HDD","Explosion-Proof Series","Face Product Kits","Fingerprint Product Kits","Fixed Base","Fixed series","Flap Barrier","Full Height Turnstile","General Wired Detectors","General Wired Sounders","HeatPro Series","HiWatch Series","HiWatch PoE Kit","HiWatch Wi-Fi Kit","Housing","Hybrid Indoor Station","Hybrid Kit","IP Door Station","IP Indoor Station","IP Kits","IOT Series","Industrial Switch","Junction","KVM","Lens","LYNX","MBUS Series","Mirror Series","Mobile Accessories","Modules","Network Speaker","Network Video Recorders","Optional Components","Outdoor LED","Outdoor Wireless Bridge","Panoramic Series","Panic Alarm Box","Panic Alarm Panel","PoE Kit","Power Adapter","Power Supply","Pro","Pro Series","Pro Series With AcuSense","PTZ Camera Series","Rugged Tablet","Security Microphone","Security Radar","SIP Server","Smart Managed Switch","SOHO Switch","Special Series","Swing Barriers","Swing Gate","Thermography HeatPro Series","Tripod Turnstile","Turbo HD PTZ","Turbo HD 720P KIT","Turbo HD 1080P KIT","Turbo HD Camera with ColorVu","Ultra","Ultra Series","Unmanaged Switch","Value","Value Camera","Value NVR","Value Series","Video Conference series","VPro Series","Wi-Fi Kit","Wi-Fi NVR","X86-OEM"]
+    };
 
-        const formatP = (v) => {
-            const num = parseFloat(v);
-            return (num > 0) ? `$${num.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : `<span class="no-price">-</span>`;
-        };
+    const DEFAULTS = { marca: 'Todas las Marcas', linea: 'Todas las Líneas', serie: 'Todas las Series' };
 
-        function buildQuery() {
-            let q = _supabase.from('productos').select('*', { count: 'exact' }).not('modelo', 'is', null).neq('modelo', '');
-            
-            if (searchInput instanceof HTMLInputElement && searchInput.value) {
-                const t = searchInput.value.trim();
-                q = q.or(`modelo.ilike.%${t}%,sap.ilike.%${t}%`);
+    const sel = { marca: new Set(), linea: new Set(), serie: new Set() };
+    let page = 0;
+    const size = 15;
+    let debTimer = null;
+
+    const tbody    = document.getElementById('tabla-body');
+    const pageInfo = document.getElementById('page-info');
+    const btnPrev  = document.getElementById('prev-page');
+    const btnNext  = document.getElementById('next-page');
+    const searchIn = document.getElementById('buscador');
+    const modalExp = document.getElementById('modal-export');
+
+    // ── CONSTRUIR DROPDOWNS ──
+    function buildDropdown(key) {
+        const panel   = document.getElementById(`dp-${key}`);
+        const trigger = document.getElementById(`dt-${key}`);
+        const arrow   = document.getElementById(`ta-${key}`);
+
+        // Buscador interno
+        const dsWrap = document.createElement('div');
+        dsWrap.className = 'dp-search';
+        const dsInput = document.createElement('input');
+        dsInput.type = 'text';
+        dsInput.placeholder = 'Buscar...';
+        dsWrap.appendChild(dsInput);
+        panel.appendChild(dsWrap);
+
+        // Seleccionar todos
+        const saRow = document.createElement('div');
+        saRow.className = 'dp-selall';
+        const saCb = document.createElement('input');
+        saCb.type = 'checkbox'; saCb.id = `sa-${key}`;
+        const saLbl = document.createElement('label');
+        saLbl.htmlFor = `sa-${key}`; saLbl.textContent = 'Seleccionar todos';
+        saRow.appendChild(saCb); saRow.appendChild(saLbl);
+        panel.appendChild(saRow);
+
+        // Lista de items
+        const list = document.createElement('div');
+        list.className = 'dp-list';
+
+        OPTS[key].forEach(opt => {
+            const row = document.createElement('div');
+            row.className = 'dp-item';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox'; cb.id = `cb-${key}-${opt}`; cb.value = opt;
+            cb.addEventListener('change', () => {
+                if (cb.checked) sel[key].add(opt);
+                else sel[key].delete(opt);
+                syncSelAll(key);
+                updateTrigger(key);
+                resetAndLoad();
+            });
+            const lbl = document.createElement('label');
+            lbl.htmlFor = `cb-${key}-${opt}`; lbl.textContent = opt;
+            row.appendChild(cb); row.appendChild(lbl);
+            list.appendChild(row);
+        });
+        panel.appendChild(list);
+
+        // Seleccionar todos
+        saCb.addEventListener('change', () => {
+            list.querySelectorAll('input[type="checkbox"]').forEach(c => {
+                if (c.closest('.dp-item').style.display === 'none') return;
+                c.checked = saCb.checked;
+                if (saCb.checked) sel[key].add(c.value);
+                else sel[key].delete(c.value);
+            });
+            updateTrigger(key);
+            resetAndLoad();
+        });
+
+        // Buscar dentro
+        dsInput.addEventListener('input', () => {
+            const q = dsInput.value.toLowerCase();
+            list.querySelectorAll('.dp-item').forEach(row => {
+                const lbl = row.querySelector('label');
+                row.style.display = lbl && lbl.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
+        });
+        dsInput.addEventListener('click', e => e.stopPropagation());
+
+        // Toggle
+        trigger.addEventListener('click', e => {
+            e.stopPropagation();
+            const isOpen = panel.classList.contains('open');
+            closeAllDropdowns();
+            if (!isOpen) {
+                panel.classList.add('open');
+                arrow.classList.add('open');
             }
-            if (fMarca instanceof HTMLSelectElement && fMarca.value) q = q.eq('marca', fMarca.value);
-            if (fLinea instanceof HTMLSelectElement && fLinea.value) q = q.eq('linea', fLinea.value);
-            if (fSerie instanceof HTMLSelectElement && fSerie.value) q = q.eq('serie', fSerie.value);
-            
+        });
+    }
+
+    function syncSelAll(key) {
+        const sa = document.getElementById(`sa-${key}`);
+        if (!sa) return;
+        const all  = OPTS[key].every(o => sel[key].has(o));
+        const some = OPTS[key].some(o => sel[key].has(o));
+        sa.checked = all;
+        sa.indeterminate = some && !all;
+    }
+
+    function updateTrigger(key) {
+        const trigger = document.getElementById(`dt-${key}`);
+        const lbl   = trigger.querySelector('.trigger-label');
+        const count = sel[key].size;
+        let badge   = trigger.querySelector('.trigger-count');
+
+        if (count === 0) {
+            lbl.textContent = DEFAULTS[key];
+            if (badge) badge.remove();
+        } else if (count === 1) {
+            lbl.textContent = [...sel[key]][0];
+            if (badge) badge.remove();
+        } else {
+            lbl.textContent = DEFAULTS[key];
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'trigger-count';
+                trigger.insertBefore(badge, trigger.querySelector('.trigger-arrow'));
+            }
+            badge.textContent = count;
+        }
+    }
+
+    function closeAllDropdowns() {
+        document.querySelectorAll('.dropdown-panel').forEach(p => p.classList.remove('open'));
+        document.querySelectorAll('.trigger-arrow').forEach(a => a.classList.remove('open'));
+    }
+    document.addEventListener('click', closeAllDropdowns);
+
+    buildDropdown('marca');
+    buildDropdown('linea');
+    buildDropdown('serie');
+
+    // ── FORMATO PRECIO ──
+    const fmt = v => {
+        const n = parseFloat(v);
+        return n > 0
+            ? `<span class="p-vta">$${n.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>`
+            : `<span class="no-price">-</span>`;
+    };
+
+    // ── FETCH (maneja búsqueda con caracteres especiales splitando en 2 queries) ──
+    async function fetchData(forExport = false) {
+        const term   = searchIn.value.trim();
+        const marcas = [...sel.marca];
+        const lineas = [...sel.linea];
+        const series = [...sel.serie];
+
+        function applyFilters(q) {
+            q = q.not('modelo', 'is', null).neq('modelo', '');
+            if (marcas.length) q = q.in('marca', marcas);
+            if (lineas.length) q = q.in('linea', lineas);
+            if (series.length) q = q.in('serie', series);
             return q;
         }
 
-        async function load() {
-            const { data, count, error } = await buildQuery().order('modelo', { ascending: true }).range(page * size, (page * size) + size - 1);
-            
-            if (error) { console.error("Error Supabase:", error); return; }
-            if (data && tbody) {
-                tbody.innerHTML = data.map(p => `
-                    <tr>
-                        <td class="col-mod">${p.modelo}</td>
-                        <td><img class="img-prod" src="https://wmubdrjqailnizfyxsft.supabase.co/storage/v1/object/public/Fotos%20-%20Productos/${p.sap}.jpg" onerror="this.src='https://placehold.co/45x45?text=N/A'"></td>
-                        <td>${p.marca || '-'}</td>
-                        <td>${p.linea || '-'}</td>
-                        <td>${p.serie || '-'}</td>
-                        <td class="col-tech">${p.carac_tecnicas || '-'}</td>
-                        <td class="p-vta">${formatP(p.price_diamond)}</td>
-                        <td class="p-vta">${formatP(p.price_black)}</td>
-                        <td class="p-vta">${formatP(p.price_platinum)}</td>
-                        <td class="p-vta">${formatP(p.price_ruby)}</td>
-                        <td class="p-vta">${formatP(p.price_gold)}</td>
-                        <td class="p-vta">${formatP(p.fob_bdm)}</td>
-                        <td class="p-vta">${formatP(p.proy_bdm)}</td>
-                        <td class="p-vta">${formatP(p.fob_dir)}</td>
-                        <td class="p-vta">${formatP(p.proy_dir)}</td>
-                        <td>${p.ciclo_de_vida || '-'}</td>
-                        <td style="font-weight:bold;">${p.sap || '-'}</td>
-                    </tr>
-                `).join('');
+        let data, total;
 
-                const total = count || 0;
-                if (pageInfo) pageInfo.innerText = `Mostrando ${(page * size) + 1} - ${Math.min((page * size) + size, total)} de ${total}`;
-                if (btnPrev instanceof HTMLButtonElement) btnPrev.disabled = page === 0;
-                if (btnNext instanceof HTMLButtonElement) btnNext.disabled = ((page * size) + size) >= total;
-            }
+        if (term) {
+            const [r1, r2] = await Promise.all([
+                applyFilters(_sb.from('productos').select('*', { count: 'exact' }))
+                    .ilike('modelo', `%${term}%`).order('modelo'),
+                applyFilters(_sb.from('productos').select('*', { count: 'exact' }))
+                    .ilike('sap', `%${term}%`).order('modelo')
+            ]);
+            const seen = new Set();
+            const merged = [...(r1.data||[]), ...(r2.data||[])].filter(p => {
+                const k = p.id ?? p.modelo;
+                if (seen.has(k)) return false;
+                seen.add(k); return true;
+            });
+            merged.sort((a, b) => (a.modelo||'').localeCompare(b.modelo||''));
+            total = merged.length;
+            data  = forExport ? merged : merged.slice(page*size, page*size+size);
+        } else {
+            let q = applyFilters(_sb.from('productos').select('*', { count: 'exact' })).order('modelo');
+            if (!forExport) q = q.range(page*size, page*size+size-1);
+            const r = await q;
+            if (r.error) throw r.error;
+            data  = r.data;
+            total = r.count;
         }
+        return { data, total };
+    }
 
-        function initFilters() {
-            // Llenar Marca
-            if (fMarca instanceof HTMLSelectElement) {
-                fMarca.innerHTML = '<option value="">Todas las Marcas</option>' + 
-                    MARCAS_MASTER.sort().map(m => `<option value="${m}">${m}</option>`).join('');
+    // ── RENDER ──
+    async function load() {
+        tbody.innerHTML = '<tr class="empty-msg"><td colspan="12">Buscando...</td></tr>';
+        try {
+            const { data, total } = await fetchData(false);
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr class="empty-msg"><td colspan="12">No se encontraron productos.</td></tr>';
+                pageInfo.innerText = 'Sin resultados';
+                btnPrev.disabled = btnNext.disabled = true;
+                return;
             }
-            // Llenar Línea
-            if (fLinea instanceof HTMLSelectElement) {
-                fLinea.innerHTML = '<option value="">Todas las Líneas</option>' + 
-                    LINEAS_MASTER.sort().map(l => `<option value="${l}">${l}</option>`).join('');
-            }
-            // Llenar Serie
-            if (fSerie instanceof HTMLSelectElement) {
-                const sorted = [...new Set(SERIES_MASTER)].sort();
-                fSerie.innerHTML = '<option value="">Todas las Series</option>' + 
-                    sorted.map(s => `<option value="${s}">${s}</option>`).join('');
-            }
+            tbody.innerHTML = data.map(p => `
+                <tr>
+                    <td class="col-mod">${p.modelo || '-'}</td>
+                    <td><img class="img-prod"
+                        src="https://wmubdrjqailnizfyxsft.supabase.co/storage/v1/object/public/Fotos%20-%20Productos/${p.sap}.jpg"
+                        onerror="this.src='https://placehold.co/45x45?text=N/A'"></td>
+                    <td>${p.marca || '-'}</td>
+                    <td>${p.linea || '-'}</td>
+                    <td>${p.serie || '-'}</td>
+                    <td class="col-tech">${p.carac_tecnicas || '-'}</td>
+                    <td>${fmt(p.price_diamond)}</td>
+                    <td>${fmt(p.price_platinum)}</td>
+                    <td>${fmt(p.price_ruby)}</td>
+                    <td>${fmt(p.price_black)}</td>
+                    <td>${fmt(p.price_gold)}</td>
+                    <td style="font-weight:bold; font-size:11px;">${p.sap || '-'}</td>
+                </tr>
+            `).join('');
+
+            const from = page*size + 1;
+            const to   = Math.min(page*size + size, total);
+            pageInfo.innerText = `Mostrando ${from} - ${to} de ${total}`;
+            btnPrev.disabled = page === 0;
+            btnNext.disabled = to >= total;
+        } catch(e) {
+            console.error(e);
+            tbody.innerHTML = `<tr class="empty-msg"><td colspan="12">Error: ${e.message}</td></tr>`;
         }
+    }
 
-        const resetAndLoad = () => { page = 0; load(); };
+    const resetAndLoad = () => { page = 0; clearTimeout(debTimer); debTimer = setTimeout(load, 280); };
 
-        if (searchInput) searchInput.addEventListener('input', resetAndLoad);
-        [fMarca, fLinea, fSerie].forEach(el => {
-            if (el) el.addEventListener('change', resetAndLoad);
-        });
+    // ── PAGINACIÓN ──
+    btnPrev.addEventListener('click', () => { if (page > 0) { page--; load(); } });
+    btnNext.addEventListener('click', () => { page++; load(); });
+    searchIn.addEventListener('input', resetAndLoad);
 
-        if (btnPrev) btnPrev.addEventListener('click', () => { if (page > 0) { page--; load(); } });
-        if (btnNext) btnNext.addEventListener('click', () => { page++; load(); });
+    // ── MODAL EXPORT ──
+    document.getElementById('btn-excel').addEventListener('click', () => {
+        modalExp.classList.add('active');
+    });
+    document.getElementById('modal-cancel').addEventListener('click', () => {
+        modalExp.classList.remove('active');
+    });
+    modalExp.addEventListener('click', e => {
+        if (e.target === modalExp) modalExp.classList.remove('active');
+    });
 
-        initFilters();
-        load();
-    </script>
+    const COLS = ['modelo','marca','linea','serie','carac_tecnicas','price_diamond','price_platinum','price_ruby','price_black','price_gold','sap'];
+    const HDRS = ['MODELO','MARCA','LÍNEA','SERIE','CARACTERÍSTICAS','DIAMOND','PLATINUM','RUBY','BLACK','GOLD','SAP CODE'];
+
+    document.getElementById('do-csv').addEventListener('click', async () => {
+        modalExp.classList.remove('active');
+        const { data } = await fetchData(true);
+        if (!data) return;
+        const rows = [HDRS.join(','), ...data.map(p =>
+            COLS.map(k => `"${String(p[k]??'').replace(/"/g,'""')}"`).join(',')
+        )];
+        const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `catalogo_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+    });
+
+    document.getElementById('do-xlsx').addEventListener('click', async () => {
+        modalExp.classList.remove('active');
+        const { data } = await fetchData(true);
+        if (!data) return;
+        const rows = [HDRS, ...data.map(p => COLS.map(k => p[k] ?? ''))];
+        const ws = XLSX.utils.aoa_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Catálogo');
+        XLSX.writeFile(wb, `catalogo_${new Date().toISOString().slice(0,10)}.xlsx`);
+    });
+
+    // ── INIT ──
+    load();
+})();
+</script>
 </body>
 </html>
