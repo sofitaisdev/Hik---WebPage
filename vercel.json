@@ -1,17 +1,17 @@
 {
-    "headers": [
-      {
-        "source": "/(.*)",
-        "headers": [
-          {
-            "key": "Content-Security-Policy",
-            "value": "frame-ancestors 'self' https://www.wix.com https://*.wixsite.com"
-          },
-          {
-            "key": "X-Frame-Options",
-            "value": "ALLOWALL"
-          }
-        ]
-      }
-    ]
-  }
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Frame-Options",
+          "value": "ALLOWALL"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors *"
+        }
+      ]
+    }
+  ]
+}
