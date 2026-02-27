@@ -11,7 +11,6 @@
     :root {
       --burg: #800000; --burg-dark: #5a0000; --burg-light: #a00000;
       --cream: #f5f5f5; --border: #e0e0e0; --text: #1a1a1a; --text-muted: #888;
-      /* Anchos de columna en px — header y filas usan EXACTAMENTE los mismos */
       --w-modelo:   260px;
       --w-marca:     90px;
       --w-linea:    130px;
@@ -21,17 +20,39 @@
       --w-foto:      70px;
       --row-total: 1210px;
     }
-    body { font-family: "Inter", sans-serif; background: var(--cream); color: var(--text); }
+    html, body { height: 100%; }
+    body { font-family: "Inter", sans-serif; background: var(--cream); color: var(--text); display: flex; flex-direction: column; overflow: hidden; }
 
-    /* HEADER */
-    .header { background: linear-gradient(135deg, var(--burg-dark), var(--burg) 60%, var(--burg-light)); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 3px 12px rgba(0,0,0,0.3); }
-    .logo-wrapper { background: white; padding: 6px 12px; border-radius: 6px; }
-    .header-title { color: white; font-weight: 700; font-size: 0.9rem; letter-spacing: 0.15em; text-transform: uppercase; position: absolute; left: 50%; transform: translateX(-50%); }
+    /* HEADER — ahora blanco */
+    .header {
+      background: #ffffff;
+      padding: 10px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.10);
+      border-bottom: 2px solid var(--burg);
+      flex-shrink: 0;
+    }
+    .logo-wrapper { display: flex; align-items: center; }
+    .header-title {
+      color: var(--burg);
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
 
     /* TOOLBAR */
-    .toolbar { background: white; padding: 14px 32px; border-bottom: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .toolbar { background: white; padding: 8px 32px; border-bottom: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.06); flex-shrink: 0; }
     .toolbar-inner { display: flex; gap: 8px; align-items: center; }
-    .search-wrap { flex: 0 0 46%; position: relative; }
+    .search-wrap { flex: 0 0 26%; position: relative; }
     .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
     .search-input { width: 100%; padding: 9px 12px 9px 38px; font-size: 0.88rem; font-family: inherit; border: 1.5px solid var(--border); border-radius: 6px; outline: none; transition: border-color 0.2s; background: #fafafa; }
     .search-input:focus { border-color: var(--burg); background: white; }
@@ -56,20 +77,16 @@
     .btn-green:hover { background: #145c2c; }
 
     /* STATUS */
-    .status-bar { padding: 6px 32px; background: #fff8f8; border-bottom: 1px solid var(--border); min-height: 30px; }
+    .status-bar { padding: 3px 32px; background: #fff8f8; border-bottom: 1px solid var(--border); min-height: 22px; flex-shrink: 0; }
     .loading-bar { display: none; align-items: center; gap: 8px; color: var(--burg); font-size: 0.83rem; font-weight: 500; }
     .loading-bar.active { display: flex; }
     .spinner { width: 14px; height: 14px; border: 2.5px solid #f0d0d0; border-top-color: var(--burg); border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    main { padding: 20px 32px; overflow-x:auto; }
-    .card { background: white; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); overflow: hidden; }
+    main { padding: 10px 32px 6px; overflow-x: auto; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .card { background: white; border-radius: 10px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); overflow: hidden; display: flex; flex-direction: column; flex: 1; min-height: 0; }
 
-    /* =============================================
-       TABLA — sistema de anchos fijos compartidos
-       El header y las filas usan las mismas variables
-       ============================================= */
-    .tbl-wrap { overflow-x: auto; overflow-y: auto; max-height: 75vh; width:100%; }
+    .tbl-wrap { overflow-x: auto; overflow-y: auto; width: 100%; flex: 1; min-height: 0; }
     .tbl-wrap::-webkit-scrollbar { width: 7px; height: 7px; }
     .tbl-wrap::-webkit-scrollbar-thumb { background: #bbb; border-radius: 6px; }
 
@@ -92,9 +109,8 @@
     .tbl-row:nth-child(even) { background: #fafafa; }
     .tbl-row:nth-child(even):hover { background: #fdf5f5; }
 
-    /* Celda base */
     .c {
-      padding: 10px 8px;
+      padding: 4px 8px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -102,9 +118,8 @@
       flex-shrink: 0;
       overflow: hidden;
     }
-    /* Header cell */
     .h {
-      padding: 11px 8px;
+      padding: 8px 8px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -115,7 +130,6 @@
       color: white;
       flex-shrink: 0;
     }
-    /* Anchos — aplicados a .h y .c por igual */
     .col-modelo  { width: var(--w-modelo);  justify-content: flex-start; padding-left: 16px; }
     .col-marca   { width: var(--w-marca);  }
     .col-linea   { width: var(--w-linea);  }
@@ -130,15 +144,16 @@
     .modelo-txt { font-weight: 600; font-size: 0.82rem; line-height: 1.35; color: #111; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .func-txt   { font-size: 0.72rem; color: #555; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-    .price { font-weight: 700; font-size: 0.82rem; text-align: center; }
+    /* ===== PRECIOS EN NEGRITA ===== */
+    .price { font-weight: 700 !important; font-size: 0.84rem; text-align: center; }
     .p-diamond { color: #2b7fd4; }
     .p-black   { color: #111; }
     .p-plat    { color: #7070a0; }
     .p-gold    { color: #b8860b; }
-    .p-zero    { color: #ccc; font-weight: 400; }
+    .p-zero    { color: #ccc; font-weight: 400 !important; }
 
     /* PAGINATION */
-    .pagination { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px; background: white; border-top: 1px solid var(--border); flex-wrap: wrap; }
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px; background: white; border-top: 1px solid var(--border); flex-wrap: wrap; flex-shrink: 0; }
     .page-btn { padding: 5px 11px; border: 1.5px solid var(--border); border-radius: 5px; background: white; cursor: pointer; font-family: inherit; font-size: 0.83rem; transition: all 0.15s; }
     .page-btn:hover, .page-btn.active { background: var(--burg); color: white; border-color: var(--burg); }
     .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
@@ -214,7 +229,6 @@
 <main>
   <div class="card">
     <div class="tbl-wrap">
-      <!-- HEADER y FILAS generados por JS -->
       <div id="tbl-head"></div>
       <div id="table-body"></div>
     </div>
@@ -231,28 +245,36 @@
   var SB_URL = "https://mywtmrwjzwpwkctixnzi.supabase.co/rest/v1/productos";
   var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15d3Rtcndqendwd2tjdGl4bnppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NTQ4NDYsImV4cCI6MjA4NzUzMDg0Nn0.jdA2J-YUuRqnqj5-4l7yxGn_VoOX6C5Jwvn7k4l_ZgA";
   var H = { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY };
-  var PAGE_SIZE = 100;
+  var PAGE_SIZE = 15;
   var allData = [], filtered = [], currentPage = 1;
   var filterState = { marca:{}, linea:{}, serie:{} };
   var dropdownValues = { marca:[], linea:[], serie:[] };
   var searchTimer = null;
 
   async function fetchAll(url) {
-    var all = [], offset = 0;
-    while(true) {
-      var r = await fetch(url + "&limit=1000&offset=" + offset, { headers: H });
-      var b = await r.json();
-      if(!Array.isArray(b) || !b.length) break;
-      all = all.concat(b);
-      if(b.length < 1000) break;
-      offset += 1000;
+    var headRes = await fetch(url + "&limit=1&offset=0", { headers: { ...H, "Prefer": "count=exact" } });
+    var cr = headRes.headers.get("content-range");
+    var total = cr ? parseInt(cr.split("/")[1]) : 0;
+
+    if (!total) {
+      var b = await headRes.json();
+      return Array.isArray(b) ? b : [];
     }
-    return all;
+
+    var chunkSize = 1000;
+    var offsets = [];
+    for (var i = 0; i < total; i += chunkSize) offsets.push(i);
+
+    var chunks = await Promise.all(
+      offsets.map(offset =>
+        fetch(url + "&limit=" + chunkSize + "&offset=" + offset, { headers: H }).then(r => r.json())
+      )
+    );
+    return chunks.flat();
   }
 
-  async function fetchDistinct(col) {
-    var rows = await fetchAll(SB_URL + "?select=" + col);
-    return [...new Set(rows.map(r => r[col]).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b)));
+  function extractDistinct(data, col) {
+    return [...new Set(data.map(r => r[col]).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b)));
   }
 
   function buildDropdown(id, label) {
@@ -311,6 +333,11 @@
       if(se.length && !se.includes(p.serie)) return false;
       if(q && !(p.modelo||"").toLowerCase().includes(q)) return false;
       return true;
+    }).sort((a,b) => {
+      var camA = /camara|cámara|camera|cam\b/i.test(a.linea||"") || /camara|cámara|camera|cam\b/i.test(a.serie||"") ? 1 : 0;
+      var camB = /camara|cámara|camera|cam\b/i.test(b.linea||"") || /camara|cámara|camera|cam\b/i.test(b.serie||"") ? 1 : 0;
+      if(camB !== camA) return camB - camA;
+      return (b.imagen?1:0)-(a.imagen?1:0);
     });
     currentPage = 1;
     render(); paginate();
@@ -324,7 +351,6 @@
     return "<span class='price "+cls+"'>$"+n.toLocaleString("es-AR",{minimumFractionDigits:0,maximumFractionDigits:2})+"</span>";
   }
 
-  // flex = unidades proporcionales (total ~20)
   var COLS = [
     { key:"modelo",          label:"Modelo",   flex:3.5, align:"left"   },
     { key:"marca",           label:"Marca",    flex:1.2, align:"center" },
@@ -343,8 +369,7 @@
     head.style.cssText = "display:flex;flex-direction:row;align-items:stretch;background:linear-gradient(90deg,#5a0000,#800000);position:sticky;top:0;z-index:10;min-width:1215px;width:100%;";
     COLS.forEach(function(col) {
       var d = document.createElement("div");
-      var pl = col.align === "left" ? "14px" : "6px";
-      d.style.cssText = "flex:"+col.flex+";min-width:0;display:flex;align-items:center;justify-content:"+(col.align==="left"?"flex-start":"center")+";padding:11px "+pl+";font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:white;box-sizing:border-box;border-right:1px solid rgba(255,255,255,0.1);overflow:hidden;";
+      d.style.cssText = "flex:"+col.flex+";min-width:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 6px;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:white;box-sizing:border-box;border-right:1px solid rgba(255,255,255,0.1);overflow:hidden;";
       d.textContent = col.label;
       head.appendChild(d);
     });
@@ -355,7 +380,7 @@
     d.className = "c " + classes;
     var jc = (align === "left") ? "flex-start" : "center";
     var pl = (align === "left") ? "14px" : "8px";
-    d.style.cssText = "flex:"+(w||1)+";min-width:0;display:flex;align-items:center;justify-content:"+jc+";text-align:"+(align==="left"?"left":"center")+";padding:10px "+pl+";font-size:0.82rem;box-sizing:border-box;overflow:hidden;border-right:1px solid #f0f0f0;";
+    d.style.cssText = "flex:"+(w||1)+";min-width:0;display:flex;align-items:center;justify-content:"+jc+";text-align:"+(align==="left"?"left":"center")+";padding:4px "+pl+";font-size:0.78rem;box-sizing:border-box;overflow:hidden;border-right:1px solid #f0f0f0;";
     if(typeof content === "string") d.innerHTML = content;
     else d.appendChild(content);
     return d;
@@ -387,7 +412,7 @@
       spanM.textContent = p.modelo||"–";
       var cellM = document.createElement("div");
       cellM.className = "c col-modelo";
-      cellM.style.cssText = "flex:3.5;min-width:0;display:flex;align-items:center;justify-content:flex-start;padding:10px 14px;font-size:0.82rem;box-sizing:border-box;overflow:hidden;border-right:1px solid #f0f0f0;";
+      cellM.style.cssText = "flex:3.5;min-width:0;display:flex;align-items:center;justify-content:flex-start;padding:4px 14px;font-size:0.78rem;box-sizing:border-box;overflow:hidden;border-right:1px solid #f0f0f0;";
       cellM.appendChild(spanM);
 
       var spanF = document.createElement("span");
@@ -395,18 +420,18 @@
       spanF.textContent = func||"–";
       var cellF = document.createElement("div");
       cellF.className = "c col-func";
-      cellF.style.cssText = "flex:4;min-width:0;display:flex;align-items:center;justify-content:flex-start;padding:10px 10px;font-size:0.72rem;box-sizing:border-box;overflow:hidden;border-right:1px solid #f0f0f0;";
+      cellF.style.cssText = "flex:4;min-width:0;display:flex;align-items:center;justify-content:flex-start;padding:4px 10px;font-size:0.68rem;box-sizing:border-box;overflow:hidden;border-right:1px solid #f0f0f0;";
       cellF.appendChild(spanF);
 
       var fotoEl;
       if(foto) {
         var wrap = document.createElement("div");
-        wrap.style.cssText = "width:48px;height:48px;background:#fff;border:1px solid #eee;border-radius:5px;overflow:hidden;cursor:pointer;";
+        wrap.style.cssText = "width:36px;height:36px;background:#fff;border:1px solid #eee;border-radius:4px;overflow:hidden;cursor:pointer;";
         wrap.dataset.foto = foto;
         wrap.addEventListener("click", function(){ openLB(this); });
         var img = document.createElement("img");
         img.src = foto;
-        img.style.cssText = "width:48px;height:48px;object-fit:contain;";
+        img.style.cssText = "width:36px;height:36px;object-fit:contain;";
         img.onerror = function(){ this.style.display="none"; };
         wrap.appendChild(img);
         fotoEl = wrap;
@@ -417,7 +442,7 @@
       }
       var cellFoto = document.createElement("div");
       cellFoto.className = "c col-foto";
-      cellFoto.style.cssText = "flex:0.8;min-width:0;display:flex;align-items:center;justify-content:center;padding:6px;box-sizing:border-box;overflow:hidden;";
+      cellFoto.style.cssText = "flex:0.8;min-width:0;display:flex;align-items:center;justify-content:center;padding:3px;box-sizing:border-box;overflow:hidden;";
       cellFoto.appendChild(fotoEl);
 
       row.appendChild(cellM);
@@ -486,15 +511,20 @@
     buildHeader();
 
     try {
-      document.getElementById("loading-msg").textContent = "Cargando filtros...";
-      var [ma,li,se] = await Promise.all([fetchDistinct("marca"),fetchDistinct("linea"),fetchDistinct("serie")]);
-      dropdownValues.marca=ma; dropdownValues.linea=li; dropdownValues.serie=se;
+      document.getElementById("loading-msg").textContent = "Cargando productos...";
+      allData = await fetchAll(SB_URL+"?select=*");
+      dropdownValues.marca = extractDistinct(allData, "marca");
+      dropdownValues.linea  = extractDistinct(allData, "linea");
+      dropdownValues.serie  = extractDistinct(allData, "serie");
       buildDropdown("marca","Todas las marcas");
       buildDropdown("linea","Todas las lineas");
       buildDropdown("serie","Todas las series");
-      document.getElementById("loading-msg").textContent = "Cargando productos...";
-      allData = await fetchAll(SB_URL+"?select=*");
-      filtered = allData.slice();
+      filtered = allData.slice().sort((a,b) => {
+        var camA = /camara|cámara|camera|cam\b/i.test(a.linea||"") || /camara|cámara|camera|cam\b/i.test(a.serie||"") ? 1 : 0;
+        var camB = /camara|cámara|camera|cam\b/i.test(b.linea||"") || /camara|cámara|camera|cam\b/i.test(b.serie||"") ? 1 : 0;
+        if(camB !== camA) return camB - camA;
+        return (b.imagen?1:0)-(a.imagen?1:0);
+      });
       render(); paginate();
       document.getElementById("loading-bar").classList.remove("active");
     } catch(err) {
@@ -504,44 +534,36 @@
   start();
 </script>
 
-<div style="margin:20px 32px 28px;background:white;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,0.08);padding:24px 32px;">
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:28px;">
+<div style="margin:4px 32px 6px;background:white;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,0.08);padding:12px 24px;flex-shrink:0;">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;">
     <div>
-      <p style="font-size:0.95rem;font-weight:700;text-decoration:underline;margin-bottom:10px;color:#222;">Guía rápida — precios para instaladores:</p>
-      <p style="font-size:0.92rem;font-weight:700;margin-bottom:5px;color:#222;">GREMIO</p>
-      <ul style="list-style:none;padding:0;margin:0 0 10px;">
-        <li style="font-size:0.88rem;color:#444;margin-bottom:3px;">🔷 <strong>GOLD</strong> = Precio Gremio Regular</li>
-        <li style="font-size:0.88rem;color:#444;margin-bottom:3px;">🔷 <strong>GOLD PLUS</strong> = compras &gt; USD 1.500 + IVA</li>
-        <li style="font-size:0.88rem;color:#444;margin-bottom:3px;">🔷 <strong>GOLD PRIME</strong> = compras &gt; USD 2.500 + IVA</li>
-      </ul>
-      <p style="font-size:0.92rem;font-weight:700;margin-bottom:5px;color:#222;">CONSUMIDOR FINAL / MAP</p>
-      <ul style="list-style:none;padding:0;margin:0;">
-        <li style="font-size:0.88rem;color:#444;margin-bottom:3px;">🔷 <strong>MAP Web</strong> = para publicar en web del reseller</li>
-        <li style="font-size:0.88rem;color:#444;margin-bottom:3px;">🔷 <strong>MAP/MELI</strong> = para MercadoLibre o ecommerce</li>
-        <li style="font-size:0.88rem;color:#888;margin-top:5px;font-style:italic;">🟡 Excepto si hay promoción autorizada</li>
-      </ul>
+      <p style="font-size:0.78rem;font-weight:700;text-decoration:underline;margin-bottom:6px;color:#222;">Guía rápida — precios para instaladores:</p>
+      <p style="font-size:0.78rem;font-weight:700;margin-bottom:3px;color:#222;">GREMIO</p>
+      <p style="font-size:0.75rem;color:#444;margin-bottom:2px;">🔷 <strong>GOLD</strong> = Precio Gremio Regular</p>
+      <p style="font-size:0.75rem;color:#444;margin-bottom:2px;">🔷 <strong>GOLD PLUS</strong> = compras &gt; USD 1.500 + IVA</p>
+      <p style="font-size:0.75rem;color:#444;margin-bottom:6px;">🔷 <strong>GOLD PRIME</strong> = compras &gt; USD 2.500 + IVA</p>
+      <p style="font-size:0.78rem;font-weight:700;margin-bottom:3px;color:#222;">CONSUMIDOR FINAL / MAP</p>
+      <p style="font-size:0.75rem;color:#444;margin-bottom:2px;">🔷 <strong>MAP Web</strong> = para publicar en web del reseller</p>
+      <p style="font-size:0.75rem;color:#444;margin-bottom:2px;">🔷 <strong>MAP/MELI</strong> = para MercadoLibre o ecommerce</p>
+      <p style="font-size:0.75rem;color:#888;font-style:italic;">🟡 Excepto si hay promoción autorizada</p>
     </div>
     <div>
-      <p style="font-size:0.95rem;font-weight:700;color:#c0392b;margin-bottom:10px;">📌 POLÍTICA DE PRECIOS</p>
-      <p style="font-size:0.92rem;font-weight:700;margin-bottom:5px;color:#222;">💵 USD</p>
-      <ul style="list-style:none;padding:0;margin:0 0 12px;">
-        <li style="font-size:0.88rem;color:#444;margin-bottom:3px;">🔷 Precio de referencia. Facturable en pesos al <strong>tipo de cambio vigente</strong></li>
-        <li style="font-size:0.88rem;color:#444;">🔷 <strong>No incluye IVA</strong></li>
-      </ul>
-      <p style="font-size:0.92rem;font-weight:700;margin-bottom:5px;color:#222;">💲 PESOS (ARS)</p>
-      <ul style="list-style:none;padding:0;margin:0;">
-        <li style="font-size:0.88rem;color:#444;margin-bottom:3px;">🔷 Precio consumidor final. <strong>IVA incluido</strong></li>
-        <li style="font-size:0.88rem;color:#444;margin-bottom:3px;">🔷 Listo para publicar al cliente</li>
-        <li style="font-size:0.88rem;color:#888;font-style:italic;">🔷 Solo productos con sistema "SEG-RIGIDO"</li>
-      </ul>
+      <p style="font-size:0.78rem;font-weight:700;color:#c0392b;margin-bottom:6px;">📌 POLÍTICA DE PRECIOS</p>
+      <p style="font-size:0.78rem;font-weight:700;margin-bottom:3px;color:#222;">💵 USD</p>
+      <p style="font-size:0.75rem;color:#444;margin-bottom:2px;">🔷 Precio de referencia. Facturable en pesos al <strong>tipo de cambio vigente</strong></p>
+      <p style="font-size:0.75rem;color:#444;margin-bottom:8px;">🔷 <strong>No incluye IVA</strong></p>
+      <p style="font-size:0.78rem;font-weight:700;margin-bottom:3px;color:#222;">💲 PESOS (ARS)</p>
+      <p style="font-size:0.75rem;color:#444;margin-bottom:2px;">🔷 Precio consumidor final. <strong>IVA incluido</strong></p>
+      <p style="font-size:0.75rem;color:#444;margin-bottom:2px;">🔷 Listo para publicar al cliente</p>
+      <p style="font-size:0.75rem;color:#888;font-style:italic;">🔷 Solo productos con sistema "SEG-RIGIDO"</p>
     </div>
     <div>
-      <p style="font-size:0.95rem;font-weight:700;color:#c0392b;margin-bottom:10px;">📌 Política MAP</p>
-      <p style="font-size:0.92rem;font-weight:700;margin-bottom:3px;color:#222;">✅ Aplica a:</p>
-      <p style="font-size:0.88rem;color:#444;margin-bottom:12px;">Productos con <strong>SISTEMA DE PRECIOS = REGULADO</strong></p>
-      <p style="font-size:0.92rem;font-weight:700;margin-bottom:3px;color:#222;">❌ No aplica a:</p>
-      <p style="font-size:0.88rem;color:#444;margin-bottom:12px;">Productos con <strong>SISTEMA DE PRECIOS = DESREGULADO</strong></p>
-      <p style="font-size:0.88rem;color:#666;font-style:italic;">Consulte con un asesor comercial o distribuidor oficial</p>
+      <p style="font-size:0.78rem;font-weight:700;color:#c0392b;margin-bottom:6px;">📌 Política MAP</p>
+      <p style="font-size:0.78rem;font-weight:700;margin-bottom:2px;color:#222;">✅ Aplica a:</p>
+      <p style="font-size:0.75rem;color:#444;margin-bottom:8px;">Productos con <strong>SISTEMA DE PRECIOS = REGULADO</strong></p>
+      <p style="font-size:0.78rem;font-weight:700;margin-bottom:2px;color:#222;">❌ No aplica a:</p>
+      <p style="font-size:0.75rem;color:#444;margin-bottom:8px;">Productos con <strong>SISTEMA DE PRECIOS = DESREGULADO</strong></p>
+      <p style="font-size:0.75rem;color:#666;font-style:italic;">Consulte con un asesor comercial o distribuidor oficial</p>
     </div>
   </div>
 </div>
