@@ -52,7 +52,6 @@
       transform: translateX(-50%);
     }
 
-    /* REALTIME INDICATOR */
     .rt-badge {
       display: flex;
       align-items: center;
@@ -87,7 +86,6 @@
       50% { box-shadow: 0 0 0 5px rgba(192,144,32,0); }
     }
 
-    /* TOAST NOTIFICATION */
     .toast-container {
       position: fixed;
       bottom: 24px;
@@ -114,7 +112,6 @@
     .toast.update { background: #1a5a9a; }
     .toast.delete { background: #8a2020; }
 
-    /* ROW HIGHLIGHT ANIMATION */
     @keyframes highlight-row {
       0%   { background: #d4f5e0; }
       100% { background: transparent; }
@@ -126,7 +123,6 @@
     .row-new     { animation: highlight-row    2.5s ease-out forwards; }
     .row-updated { animation: highlight-update 2.5s ease-out forwards; }
 
-    /* TOOLBAR */
     .toolbar { background: white; padding: 8px 32px; border-bottom: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.06); flex-shrink: 0; }
     .toolbar-inner { display: flex; gap: 8px; align-items: center; }
     .search-wrap { flex: 0 0 26%; position: relative; }
@@ -153,7 +149,6 @@
     .btn-green { padding: 9px 16px; font-size: 0.85rem; font-weight: 700; font-family: inherit; border-radius: 6px; cursor: pointer; border: none; background: #1a7a3c; color: white; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
     .btn-green:hover { background: #145c2c; }
 
-    /* STATUS */
     .status-bar { padding: 3px 32px; background: #fff8f8; border-bottom: 1px solid var(--border); min-height: 22px; flex-shrink: 0; }
     .loading-bar { display: none; align-items: center; gap: 8px; color: var(--burg); font-size: 0.83rem; font-weight: 500; }
     .loading-bar.active { display: flex; }
@@ -321,15 +316,22 @@
 <div class="toast-container" id="toast-container"></div>
 
 <script is:inline>
-  var SB_URL  = "https://mywtmrwjzwpwkctixnzi.supabase.co";
-  var SB_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15d3Rtcndqendwd2tjdGl4bnppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NTQ4NDYsImV4cCI6MjA4NzUzMDg0Nn0.jdA2J-YUuRqnqj5-4l7yxGn_VoOX6C5Jwvn7k4l_ZgA";
+  var SB_URL   = "https://mywtmrwjzwpwkctixnzi.supabase.co";
+  var SB_KEY   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15d3Rtcndqendwd2tjdGl4bnppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NTQ4NDYsImV4cCI6MjA4NzUzMDg0Nn0.jdA2J-YUuRqnqj5-4l7yxGn_VoOX6C5Jwvn7k4l_ZgA";
   var REST_URL = SB_URL + "/rest/v1/productos";
-  var H = { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY };
+
+  // ── FIX: headers base siempre con no-store para que Vercel/browser
+  //         nunca sirvan una respuesta cacheada de Supabase ──────────────────
+  var H = {
+    apikey        : SB_KEY,
+    Authorization : "Bearer " + SB_KEY,
+    "Cache-Control": "no-store"          // ← FIX 1
+  };
+
   var PAGE_SIZE = 15;
   var allData = [], filtered = [], currentPage = 1;
   var filterState = { marca:{}, linea:{}, serie:{} };
   var dropdownValues = { marca:[], linea:[], serie:[] };
-  var searchTimer = null;
 
   // ─── TOAST ─────────────────────────────────────────────────────────────────
   function showToast(msg, type) {
@@ -338,14 +340,14 @@
     t.className = "toast" + (type ? " " + type : "");
     t.textContent = msg;
     c.appendChild(t);
-    requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add("show")); });
-    setTimeout(() => {
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ t.classList.add("show"); }); });
+    setTimeout(function(){
       t.classList.remove("show");
-      setTimeout(() => t.remove(), 350);
+      setTimeout(function(){ t.remove(); }, 350);
     }, 3500);
   }
 
-  // ─── REALTIME BADGE ────────────────────────────────────────────────────────
+  // ─── BADGE ─────────────────────────────────────────────────────────────────
   function setRtStatus(state, label) {
     var badge = document.getElementById("rt-badge");
     var lbl   = document.getElementById("rt-label");
@@ -353,7 +355,42 @@
     lbl.textContent = label;
   }
 
-  // ─── POLLING CADA 30 SEG ───────────────────────────────────────────────────
+  // ─── DATA FETCH ────────────────────────────────────────────────────────────
+  // FIX 2: cache:"no-store" en cada fetch + timestamp para romper caché del browser
+  async function fetchAll(baseUrl) {
+    var ts  = "&_t=" + Date.now();                        // ← FIX 2a: cache-buster
+    var opt = { headers: H, cache: "no-store" };          // ← FIX 2b: no-store
+
+    var headRes = await fetch(
+      baseUrl + "&limit=1&offset=0" + ts,
+      { headers: { ...H, "Prefer": "count=exact" }, cache: "no-store" }
+    );
+    var cr    = headRes.headers.get("content-range");
+    var total = cr ? parseInt(cr.split("/")[1]) : 0;
+
+    if (!total) {
+      var b = await headRes.json();
+      return Array.isArray(b) ? b : [];
+    }
+
+    var chunkSize = 1000;
+    var offsets = [];
+    for (var i = 0; i < total; i += chunkSize) offsets.push(i);
+
+    var chunks = await Promise.all(
+      offsets.map(function(offset) {
+        return fetch(
+          baseUrl + "&limit=" + chunkSize + "&offset=" + offset + ts,
+          opt                                              // ← FIX 2c
+        ).then(function(r){ return r.json(); });
+      })
+    );
+    return chunks.flat();
+  }
+
+  // ─── POLLING ───────────────────────────────────────────────────────────────
+  // FIX 3: el polling ya usa fetchAll con timestamp+no-store, pero igual
+  //         agregamos la URL con timestamp fresco en cada tick
   function initPolling() {
     setRtStatus("connected", "En vivo");
     setInterval(async function() {
@@ -374,51 +411,28 @@
     dropdownValues.serie  = extractDistinct(allData, "serie");
   }
 
-    // ─── DATA FETCH ────────────────────────────────────────────────────────────
-  async function fetchAll(url) {
-    var headRes = await fetch(url + "&limit=1&offset=0", { headers: { ...H, "Prefer": "count=exact" } });
-    var cr = headRes.headers.get("content-range");
-    var total = cr ? parseInt(cr.split("/")[1]) : 0;
-
-    if (!total) {
-      var b = await headRes.json();
-      return Array.isArray(b) ? b : [];
-    }
-
-    var chunkSize = 1000;
-    var offsets = [];
-    for (var i = 0; i < total; i += chunkSize) offsets.push(i);
-
-    var chunks = await Promise.all(
-      offsets.map(offset =>
-        fetch(url + "&limit=" + chunkSize + "&offset=" + offset, { headers: H }).then(r => r.json())
-      )
-    );
-    return chunks.flat();
-  }
-
   function extractDistinct(data, col) {
-    return [...new Set(data.map(r => r[col]).filter(Boolean))].sort((a,b) => String(a).localeCompare(String(b)));
+    return [...new Set(data.map(function(r){ return r[col]; }).filter(Boolean))].sort(function(a,b){ return String(a).localeCompare(String(b)); });
   }
 
   function buildDropdown(id, label) {
-    var btn = document.getElementById("dd-"+id+"-btn");
+    var btn   = document.getElementById("dd-"+id+"-btn");
     var panel = document.getElementById("dd-"+id+"-panel");
-    var list = document.getElementById("dd-"+id+"-list");
-    var si = document.getElementById("dd-"+id+"-search");
-    var cl = document.getElementById("dd-"+id+"-clear");
-    var cnt = document.getElementById("dd-"+id+"-count");
+    var list  = document.getElementById("dd-"+id+"-list");
+    var si    = document.getElementById("dd-"+id+"-search");
+    var cl    = document.getElementById("dd-"+id+"-clear");
+    var cnt   = document.getElementById("dd-"+id+"-count");
 
     function render(q) {
       q = (q||"").toLowerCase();
       list.innerHTML = dropdownValues[id]
-        .filter(v => !q || String(v).toLowerCase().includes(q))
-        .map((v,i) => {
+        .filter(function(v){ return !q || String(v).toLowerCase().includes(q); })
+        .map(function(v,i) {
           var id2 = "cb-"+id+"-"+i;
           return "<div class='cb-panel-item'><input type='checkbox' id='"+id2+"' value='"+String(v).replace(/'/g,"&#39;")+"' "+(filterState[id][v]?"checked":"")+"><label for='"+id2+"'>"+v+"</label></div>";
         }).join("") || "<div style='padding:8px 12px;color:#aaa;font-size:0.82rem;'>Sin resultados</div>";
-      list.querySelectorAll("input[type=checkbox]").forEach(cb => {
-        cb.addEventListener("change", () => {
+      list.querySelectorAll("input[type=checkbox]").forEach(function(cb){
+        cb.addEventListener("change", function(){
           if(cb.checked) filterState[id][cb.value] = true; else delete filterState[id][cb.value];
           updateLabel(); applyFilter();
         });
@@ -430,24 +444,29 @@
       btn.classList.toggle("has-selection", sel.length > 0);
       cnt.textContent = sel.length ? sel.length + " selec." : "";
     }
-    btn.addEventListener("click", e => { e.stopPropagation(); var o = panel.classList.contains("open"); closeAll(); if(!o){ panel.classList.add("open"); btn.classList.add("open"); render(""); si.value=""; si.focus(); } });
-    si.addEventListener("input", () => render(si.value));
-    cl.addEventListener("click", () => { filterState[id]={}; updateLabel(); render(si.value); applyFilter(); });
+    btn.addEventListener("click", function(e){
+      e.stopPropagation();
+      var o = panel.classList.contains("open");
+      closeAll();
+      if(!o){ panel.classList.add("open"); btn.classList.add("open"); render(""); si.value=""; si.focus(); }
+    });
+    si.addEventListener("input", function(){ render(si.value); });
+    cl.addEventListener("click", function(){ filterState[id]={}; updateLabel(); render(si.value); applyFilter(); });
   }
 
   function closeAll() {
-    ["marca","linea","serie","export"].forEach(k => {
+    ["marca","linea","serie","export"].forEach(function(k){
       document.getElementById("dd-"+k+"-panel")?.classList.remove("open");
       document.getElementById("dd-"+k+"-btn")?.classList.remove("open");
     });
   }
   document.addEventListener("click", closeAll);
-  ["dd-marca","dd-linea","dd-serie","dd-export"].forEach(id => {
-    document.getElementById(id)?.addEventListener("click", e => e.stopPropagation());
+  ["dd-marca","dd-linea","dd-serie","dd-export"].forEach(function(id){
+    document.getElementById(id)?.addEventListener("click", function(e){ e.stopPropagation(); });
   });
 
   function sortData(arr) {
-    return arr.slice().sort((a,b) => {
+    return arr.slice().sort(function(a,b){
       var camA = /camara|cámara|camera|cam\b/i.test(a.linea||"") || /camara|cámara|camera|cam\b/i.test(a.serie||"") ? 1 : 0;
       var camB = /camara|cámara|camera|cam\b/i.test(b.linea||"") || /camara|cámara|camera|cam\b/i.test(b.serie||"") ? 1 : 0;
       if(camB !== camA) return camB - camA;
@@ -456,11 +475,11 @@
   }
 
   function applyFilter() {
-    var q = document.getElementById("search").value.toLowerCase().trim();
+    var q  = document.getElementById("search").value.toLowerCase().trim();
     var ma = Object.keys(filterState.marca);
     var li = Object.keys(filterState.linea);
     var se = Object.keys(filterState.serie);
-    filtered = sortData(allData.filter(p => {
+    filtered = sortData(allData.filter(function(p){
       if(ma.length && !ma.includes(p.marca)) return false;
       if(li.length && !li.includes(p.linea)) return false;
       if(se.length && !se.includes(p.serie)) return false;
@@ -478,22 +497,22 @@
   }
 
   var COLS = [
-    { key:"modelo",          label:"Modelo",   flex:3.5, align:"left"   },
-    { key:"marca",           label:"Marca",    flex:1.2, align:"center" },
-    { key:"linea",           label:"Linea",    flex:1.8, align:"center" },
-    { key:"serie",           label:"Serie",    flex:1.2, align:"center" },
-    { key:"func",            label:"Funciones",flex:4,   align:"left"   },
-    { key:"diamond_usd",     label:"Diamond",  flex:1.2, align:"center" },
-    { key:"black_usd",       label:"Black",    flex:1,   align:"center" },
-    { key:"platinum_usd",    label:"Platinum", flex:1.3, align:"center" },
-    { key:"gold_gremio_usd", label:"Gold",     flex:1,   align:"center" },
-    { key:"foto",            label:"Foto",     flex:0.8, align:"center" }
+    { key:"modelo",          label:"Modelo",    flex:3.5, align:"left"   },
+    { key:"marca",           label:"Marca",     flex:1.2, align:"center" },
+    { key:"linea",           label:"Linea",     flex:1.8, align:"center" },
+    { key:"serie",           label:"Serie",     flex:1.2, align:"center" },
+    { key:"func",            label:"Funciones", flex:4,   align:"left"   },
+    { key:"diamond_usd",     label:"Diamond",   flex:1.2, align:"center" },
+    { key:"black_usd",       label:"Black",     flex:1,   align:"center" },
+    { key:"platinum_usd",    label:"Platinum",  flex:1.3, align:"center" },
+    { key:"gold_gremio_usd", label:"Gold",      flex:1,   align:"center" },
+    { key:"foto",            label:"Foto",      flex:0.8, align:"center" }
   ];
 
   function buildHeader() {
     var head = document.getElementById("tbl-head");
     head.style.cssText = "display:flex;flex-direction:row;align-items:stretch;background:linear-gradient(90deg,#5a0000,#800000);position:sticky;top:0;z-index:10;min-width:1215px;width:100%;";
-    COLS.forEach(function(col) {
+    COLS.forEach(function(col){
       var d = document.createElement("div");
       d.style.cssText = "flex:"+col.flex+";min-width:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 6px;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:white;box-sizing:border-box;border-right:1px solid rgba(255,255,255,0.1);overflow:hidden;";
       d.textContent = col.label;
@@ -502,7 +521,7 @@
   }
 
   function makeCell(classes, content, w, align) {
-    var d = document.createElement("div");
+    var d  = document.createElement("div");
     d.className = "c " + classes;
     var jc = (align === "left") ? "flex-start" : "center";
     var pl = (align === "left") ? "14px" : "8px";
@@ -524,10 +543,10 @@
       return;
     }
     var frag = document.createDocumentFragment();
-    filtered.slice(s,e).forEach(function(p) {
+    filtered.slice(s,e).forEach(function(p){
       var row = document.createElement("div");
       row.className = "tbl-row";
-      row.dataset.id = p.id;  // ← para poder resaltar la fila por id
+      row.dataset.id = p.id;
       row.style.cssText = "display:flex;flex-direction:row;align-items:stretch;width:100%;border-bottom:1px solid #e0e0e0;";
 
       var func = (p.funciones||"");
@@ -573,14 +592,14 @@
       cellFoto.appendChild(fotoEl);
 
       row.appendChild(cellM);
-      row.appendChild(makeCell("col-marca", p.marca||"–", 1.2, "center"));
-      row.appendChild(makeCell("col-linea", p.linea||"–", 1.8, "center"));
-      row.appendChild(makeCell("col-serie", p.serie||"–", 1.2, "center"));
+      row.appendChild(makeCell("col-marca",   p.marca||"–",  1.2, "center"));
+      row.appendChild(makeCell("col-linea",   p.linea||"–",  1.8, "center"));
+      row.appendChild(makeCell("col-serie",   p.serie||"–",  1.2, "center"));
       row.appendChild(cellF);
-      row.appendChild(makeCell("col-diamond", price(p.diamond_usd,"p-diamond"), 1.2, "center"));
-      row.appendChild(makeCell("col-black", price(p.black_usd,"p-black"), 1, "center"));
-      row.appendChild(makeCell("col-plat", price(p.platinum_usd,"p-plat"), 1.3, "center"));
-      row.appendChild(makeCell("col-gold", price(p.gold_gremio_usd,"p-gold"), 1, "center"));
+      row.appendChild(makeCell("col-diamond", price(p.diamond_usd,   "p-diamond"), 1.2, "center"));
+      row.appendChild(makeCell("col-black",   price(p.black_usd,     "p-black"),   1,   "center"));
+      row.appendChild(makeCell("col-plat",    price(p.platinum_usd,  "p-plat"),    1.3, "center"));
+      row.appendChild(makeCell("col-gold",    price(p.gold_gremio_usd,"p-gold"),   1,   "center"));
       row.appendChild(cellFoto);
 
       frag.appendChild(row);
@@ -602,30 +621,30 @@
     h += "<button class='page-btn' id='pn'"+(currentPage===pages?" disabled":"")+">Siguiente</button>";
     h += "<span class='page-info'>Pág "+currentPage+"/"+pages+" · "+total+" productos</span>";
     pag.innerHTML = h;
-    document.getElementById("pp").onclick = () => go(currentPage-1);
-    document.getElementById("pn").onclick = () => go(currentPage+1);
-    pag.querySelectorAll("[data-p]").forEach(b => b.onclick = () => go(+b.dataset.p));
+    document.getElementById("pp").onclick = function(){ go(currentPage-1); };
+    document.getElementById("pn").onclick = function(){ go(currentPage+1); };
+    pag.querySelectorAll("[data-p]").forEach(function(b){ b.onclick = function(){ go(+b.dataset.p); }; });
   }
 
   function go(p) { currentPage = p; render(); paginate(); document.querySelector(".tbl-wrap").scrollTop = 0; }
 
   function exportData(src) {
-    return src.map(p => ({ SAP:p.sap||"", Modelo:p.modelo||"", Marca:p.marca||"", Linea:p.linea||"", Serie:p.serie||"", Funciones:p.funciones||"", "Diamond USD":p.diamond_usd||"", "Black USD":p.black_usd||"", "Platinum USD":p.platinum_usd||"", "Gold USD":p.gold_gremio_usd||"" }));
+    return src.map(function(p){ return { SAP:p.sap||"", Modelo:p.modelo||"", Marca:p.marca||"", Linea:p.linea||"", Serie:p.serie||"", Funciones:p.funciones||"", "Diamond USD":p.diamond_usd||"", "Black USD":p.black_usd||"", "Platinum USD":p.platinum_usd||"", "Gold USD":p.gold_gremio_usd||"" }; });
   }
 
-  document.getElementById("btn-export").addEventListener("click", e => {
+  document.getElementById("btn-export").addEventListener("click", function(e){
     e.stopPropagation();
     var panel = document.getElementById("dd-export-panel");
     var o = panel.classList.contains("open"); closeAll(); if(!o) panel.classList.add("open");
   });
-  document.getElementById("exp-excel").addEventListener("click", () => {
+  document.getElementById("exp-excel").addEventListener("click", function(){
     var ws = XLSX.utils.json_to_sheet(exportData(filtered));
     var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Productos"); XLSX.writeFile(wb,"catalogo.xlsx");
     closeAll();
   });
-  document.getElementById("exp-csv").addEventListener("click", () => {
+  document.getElementById("exp-csv").addEventListener("click", function(){
     var d = exportData(filtered), k = Object.keys(d[0]||{});
-    var csv = k.join(",")+"\n"+d.map(r=>k.map(key=>{var v=String(r[key]||"");return v.includes(",")||v.includes('"')?'"'+v.replace(/"/g,'""')+'"':v;}).join(",")).join("\n");
+    var csv = k.join(",")+"\n"+d.map(function(r){ return k.map(function(key){ var v=String(r[key]||""); return v.includes(",")||v.includes('"')?'"'+v.replace(/"/g,'""')+'"':v; }).join(","); }).join("\n");
     var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"})); a.download="catalogo.csv"; a.click();
     closeAll();
   });
@@ -633,15 +652,15 @@
   document.getElementById("search").addEventListener("input", applyFilter);
 
   function openLB(el) { document.getElementById("lightbox-img").src=el.dataset.foto; document.getElementById("lightbox").classList.add("active"); }
-  document.getElementById("lightbox").addEventListener("click", () => document.getElementById("lightbox").classList.remove("active"));
-  document.getElementById("lightbox-close").addEventListener("click", () => document.getElementById("lightbox").classList.remove("active"));
+  document.getElementById("lightbox").addEventListener("click", function(){ document.getElementById("lightbox").classList.remove("active"); });
+  document.getElementById("lightbox-close").addEventListener("click", function(){ document.getElementById("lightbox").classList.remove("active"); });
 
   // ─── INICIO ────────────────────────────────────────────────────────────────
   async function start() {
     buildHeader();
     try {
       document.getElementById("loading-msg").textContent = "Cargando productos...";
-      allData = await fetchAll(REST_URL+"?select=*");
+      allData = await fetchAll(REST_URL + "?select=*");
       rebuildDropdownValues();
       buildDropdown("marca","Todas las marcas");
       buildDropdown("linea","Todas las lineas");
@@ -649,10 +668,7 @@
       filtered = sortData(allData);
       render(); paginate();
       document.getElementById("loading-bar").classList.remove("active");
-
-      // Iniciar Realtime DESPUÉS de cargar los datos
       initPolling();
-
     } catch(err) {
       document.getElementById("loading-msg").textContent = "Error: "+err.message;
       setRtStatus("disconnected", "Error");
@@ -698,3 +714,20 @@
 
 </body>
 </html>
+
+<!--
+=================================================================
+TAMBIÉN CREÁ ESTE ARCHIVO EN LA RAÍZ DEL PROYECTO: vercel.json
+=================================================================
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, no-cache, must-revalidate" }
+      ]
+    }
+  ]
+}
+=================================================================
+-->
