@@ -357,36 +357,11 @@
 
   // ─── DATA FETCH ────────────────────────────────────────────────────────────
   async function fetchAll(table) {
-    var base = SB_URL + "/rest/v1/" + table + "?apikey=" + SB_KEY;
-    var ts   = "&_t=" + Date.now();
-    var opt  = { headers: H, cache: "no-store" };
+  const res = await fetch("/api/productos");
+  const data = await res.json();
+  return data;
 
-    var headRes = await fetch(
-      base + "&select=*&limit=1&offset=0" + ts,
-      { headers: { ...H, "Prefer": "count=exact" }, cache: "no-store" }
-    );
-    var cr    = headRes.headers.get("content-range");
-    var total = cr ? parseInt(cr.split("/")[1]) : 0;
-
-    if (!total) {
-      var b = await headRes.json();
-      return Array.isArray(b) ? b : [];
-    }
-
-    var chunkSize = 1000;
-    var offsets = [];
-    for (var i = 0; i < total; i += chunkSize) offsets.push(i);
-
-    var chunks = await Promise.all(
-      offsets.map(function(offset) {
-        return fetch(
-          base + "&select=*&limit=" + chunkSize + "&offset=" + offset + ts,
-          opt
-        ).then(function(r){ return r.json(); });
-      })
-    );
-    return chunks.flat();
-  }
+}
 
   // ─── POLLING ───────────────────────────────────────────────────────────────
   // FIX 3: el polling ya usa fetchAll con timestamp+no-store, pero igual
@@ -670,9 +645,10 @@
       document.getElementById("loading-bar").classList.remove("active");
       initPolling();
     } catch(err) {
-      document.getElementById("loading-msg").textContent = "Error: "+err.message;
-      setRtStatus("disconnected", "Error");
-    }
+  console.error("ERROR COMPLETO:", err);
+  document.getElementById("loading-msg").textContent = "Error: "+err.message;
+  setRtStatus("disconnected", "Error");
+}
   }
 
   start();
