@@ -353,103 +353,19 @@
     lbl.textContent = label;
   }
 
-  // ─── REALTIME VÍA WEBSOCKET NATIVO (sin librería) ─────────────────────────
-  var _ws = null, _wsRef = null, _heartbeat = null, _msgRef = 1;
-
-  function initRealtime() {
-    setRtStatus("connecting", "Conectando...");
-    var wsUrl = "wss://mywtmrwjzwpwkctixnzi.supabase.co/realtime/v1/websocket?apikey=" + SB_KEY + "&vsn=1.0.0";
-    _wsRef = {};
-    var ws = new WebSocket(wsUrl);
-    _ws = ws;
-
-    ws.onopen = function() {
-      // Unirse al canal de postgres_changes
-      ws.send(JSON.stringify({
-        topic: "realtime:productos-changes",
-        event: "phx_join",
-        payload: {
-          config: {
-            postgres_changes: [{ event: "*", schema: "public", table: "productos" }]
-          }
-        },
-        ref: String(_msgRef++)
-      }));
-      // Heartbeat cada 25 seg para mantener viva la conexión
-      _heartbeat = setInterval(function() {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ topic: "phoenix", event: "heartbeat", payload: {}, ref: String(_msgRef++) }));
-        }
-      }, 25000);
-    };
-
-    ws.onmessage = function(e) {
-      var msg;
-      try { msg = JSON.parse(e.data); } catch(err) { return; }
-
-      if (msg.event === "phx_reply" && msg.payload && msg.payload.status === "ok") {
-        setRtStatus("connected", "En vivo");
-      }
-
-      if (msg.event === "postgres_changes" && msg.payload && msg.payload.data) {
-        handleRealtimeEvent(msg.payload.data);
-      }
-    };
-
-    ws.onclose = function() {
-      clearInterval(_heartbeat);
-      if (_ws === ws) {  // solo reconectar si no fue reemplazado
-        setRtStatus("disconnected", "Desconectado");
-        setTimeout(initRealtime, 5000);
-      }
-    };
-
-    ws.onerror = function() {
-      ws.close();
-    };
-  }
-
-  function handleRealtimeEvent(data) {
-    // data = { type: "INSERT"|"UPDATE"|"DELETE", record: {...}, old_record: {...} }
-    var ev = data.type;
-    var rec = data.record || {};
-    var old = data.old_record || {};
-
-    if (ev === "INSERT") {
-      if (!allData.find(function(r){ return r.id === rec.id; })) {
-        allData.push(rec);
+  // ─── POLLING CADA 30 SEG ───────────────────────────────────────────────────
+  function initPolling() {
+    setRtStatus("connected", "En vivo");
+    setInterval(async function() {
+      try {
+        var fresh = await fetchAll(REST_URL + "?select=*");
+        allData = fresh;
         rebuildDropdownValues();
         applyFilter();
-        setTimeout(function(){ highlightRow(rec.id, "row-new"); }, 80);
+      } catch(e) {
+        setRtStatus("disconnected", "Sin conexión");
       }
-      showToast("➕ Nuevo producto: " + (rec.modelo || "sin modelo"), "");
-
-    } else if (ev === "UPDATE") {
-      var idx = allData.findIndex(function(r){ return r.id === rec.id; });
-      if (idx !== -1) allData[idx] = rec; else allData.push(rec);
-      rebuildDropdownValues();
-      applyFilter();
-      setTimeout(function(){ highlightRow(rec.id, "row-updated"); }, 80);
-      showToast("✏️ Actualizado: " + (rec.modelo || ""), "update");
-
-    } else if (ev === "DELETE") {
-      allData = allData.filter(function(r){ return r.id !== old.id; });
-      rebuildDropdownValues();
-      applyFilter();
-      showToast("🗑️ Eliminado: " + (old.modelo || ""), "delete");
-    }
-  }
-
-  function highlightRow(id, cls) {
-    var body = document.getElementById("table-body");
-    var rows = body.querySelectorAll(".tbl-row");
-    rows.forEach(function(row) {
-      if (row.dataset.id == id) {
-        row.classList.remove("row-new", "row-updated");
-        void row.offsetWidth; // force reflow
-        row.classList.add(cls);
-      }
-    });
+    }, 30000);
   }
 
   function rebuildDropdownValues() {
@@ -458,7 +374,7 @@
     dropdownValues.serie  = extractDistinct(allData, "serie");
   }
 
-  // ─── DATA FETCH ────────────────────────────────────────────────────────────
+    // ─── DATA FETCH ────────────────────────────────────────────────────────────
   async function fetchAll(url) {
     var headRes = await fetch(url + "&limit=1&offset=0", { headers: { ...H, "Prefer": "count=exact" } });
     var cr = headRes.headers.get("content-range");
@@ -548,7 +464,7 @@
       if(ma.length && !ma.includes(p.marca)) return false;
       if(li.length && !li.includes(p.linea)) return false;
       if(se.length && !se.includes(p.serie)) return false;
-      if(q && ![ p.modelo, p.marca, p.linea, p.serie, p.funciones ].some(function(f){ return (f||"").toLowerCase().includes(q); })) return false;
+      if(q && ![ p.sap, p.modelo, p.marca, p.linea, p.serie, p.funciones ].some(function(f){ return (f||"").toLowerCase().includes(q); })) return false;
       return true;
     }));
     currentPage = 1;
@@ -735,7 +651,7 @@
       document.getElementById("loading-bar").classList.remove("active");
 
       // Iniciar Realtime DESPUÉS de cargar los datos
-      initRealtime();
+      initPolling();
 
     } catch(err) {
       document.getElementById("loading-msg").textContent = "Error: "+err.message;
