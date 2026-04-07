@@ -320,13 +320,13 @@
   var SB_KEY   = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15d3Rtcndqendwd2tjdGl4bnppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NTQ4NDYsImV4cCI6MjA4NzUzMDg0Nn0.jdA2J-YUuRqnqj5-4l7yxGn_VoOX6C5Jwvn7k4l_ZgA";
   var REST_URL = SB_URL + "/rest/v1/productos";
 
-  // ── FIX: headers base siempre con no-store para que Vercel/browser
-  //         nunca sirvan una respuesta cacheada de Supabase ──────────────────
   var H = {
     apikey        : SB_KEY,
-    Authorization : "Bearer " + SB_KEY,
-    "Cache-Control": "no-store"          // ← FIX 1
+    Authorization : "Bearer " + SB_KEY
   };
+
+  // Base URL con apikey como param para garantizar que llega siempre
+  var BASE = SB_URL + "/rest/v1/productos?apikey=" + SB_KEY;
 
   var PAGE_SIZE = 15;
   var allData = [], filtered = [], currentPage = 1;
@@ -356,13 +356,13 @@
   }
 
   // ─── DATA FETCH ────────────────────────────────────────────────────────────
-  // FIX 2: cache:"no-store" en cada fetch + timestamp para romper caché del browser
-  async function fetchAll(baseUrl) {
-    var ts  = "&_t=" + Date.now();                        // ← FIX 2a: cache-buster
-    var opt = { headers: H, cache: "no-store" };          // ← FIX 2b: no-store
+  async function fetchAll(table) {
+    var base = SB_URL + "/rest/v1/" + table + "?apikey=" + SB_KEY;
+    var ts   = "&_t=" + Date.now();
+    var opt  = { headers: H, cache: "no-store" };
 
     var headRes = await fetch(
-      baseUrl + "&limit=1&offset=0" + ts,
+      base + "&select=*&limit=1&offset=0" + ts,
       { headers: { ...H, "Prefer": "count=exact" }, cache: "no-store" }
     );
     var cr    = headRes.headers.get("content-range");
@@ -380,8 +380,8 @@
     var chunks = await Promise.all(
       offsets.map(function(offset) {
         return fetch(
-          baseUrl + "&limit=" + chunkSize + "&offset=" + offset + ts,
-          opt                                              // ← FIX 2c
+          base + "&select=*&limit=" + chunkSize + "&offset=" + offset + ts,
+          opt
         ).then(function(r){ return r.json(); });
       })
     );
@@ -395,7 +395,7 @@
     setRtStatus("connected", "En vivo");
     setInterval(async function() {
       try {
-        var fresh = await fetchAll(REST_URL + "?select=*");
+        var fresh = await fetchAll("productos");
         allData = fresh;
         rebuildDropdownValues();
         applyFilter();
@@ -660,7 +660,7 @@
     buildHeader();
     try {
       document.getElementById("loading-msg").textContent = "Cargando productos...";
-      allData = await fetchAll(REST_URL + "?select=*");
+      allData = await fetchAll("productos");
       rebuildDropdownValues();
       buildDropdown("marca","Todas las marcas");
       buildDropdown("linea","Todas las lineas");
