@@ -23,7 +23,6 @@
     html, body { height: 100%; }
     body { font-family: "Inter", sans-serif; background: var(--cream); color: var(--text); display: flex; flex-direction: column; overflow: hidden; }
 
-    /* HEADER — ahora blanco */
     .header {
       background: #ffffff;
       padding: 10px 32px;
@@ -48,6 +47,80 @@
       left: 50%;
       transform: translateX(-50%);
     }
+
+    /* REALTIME INDICATOR */
+    .rt-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: #555;
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: #fafafa;
+      transition: all 0.3s;
+    }
+    .rt-badge.connected { color: #1a7a3c; border-color: #b8e8cc; background: #f0faf4; }
+    .rt-badge.connecting { color: #a07010; border-color: #f0d890; background: #fffbec; }
+    .rt-badge.disconnected { color: #cc3333; border-color: #f5c0c0; background: #fff5f5; }
+    .rt-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #ccc;
+      transition: background 0.3s;
+      flex-shrink: 0;
+    }
+    .rt-badge.connected .rt-dot { background: #1a7a3c; animation: pulse-green 2s infinite; }
+    .rt-badge.connecting .rt-dot { background: #c09020; animation: pulse-amber 1s infinite; }
+    .rt-badge.disconnected .rt-dot { background: #cc3333; }
+    @keyframes pulse-green {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(26,122,60,0.4); }
+      50% { box-shadow: 0 0 0 5px rgba(26,122,60,0); }
+    }
+    @keyframes pulse-amber {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(192,144,32,0.4); }
+      50% { box-shadow: 0 0 0 5px rgba(192,144,32,0); }
+    }
+
+    /* TOAST NOTIFICATION */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: white;
+      background: #1a7a3c;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      transform: translateX(120%);
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(0); }
+    .toast.update { background: #1a5a9a; }
+    .toast.delete { background: #8a2020; }
+
+    /* ROW HIGHLIGHT ANIMATION */
+    @keyframes highlight-row {
+      0%   { background: #d4f5e0; }
+      100% { background: transparent; }
+    }
+    @keyframes highlight-update {
+      0%   { background: #d0e8f8; }
+      100% { background: transparent; }
+    }
+    .row-new     { animation: highlight-row    2.5s ease-out forwards; }
+    .row-updated { animation: highlight-update 2.5s ease-out forwards; }
 
     /* TOOLBAR */
     .toolbar { background: white; padding: 8px 32px; border-bottom: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.06); flex-shrink: 0; }
@@ -144,7 +217,6 @@
     .modelo-txt { font-weight: 600; font-size: 0.82rem; line-height: 1.35; color: #111; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .func-txt   { font-size: 0.72rem; color: #555; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
-    /* ===== PRECIOS EN NEGRITA ===== */
     .price { font-weight: 700 !important; font-size: 0.84rem; text-align: center; }
     .p-diamond { color: #2b7fd4; }
     .p-black   { color: #111; }
@@ -152,14 +224,12 @@
     .p-gold    { color: #b8860b; }
     .p-zero    { color: #ccc; font-weight: 400 !important; }
 
-    /* PAGINATION */
     .pagination { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px; background: white; border-top: 1px solid var(--border); flex-wrap: wrap; flex-shrink: 0; }
     .page-btn { padding: 5px 11px; border: 1.5px solid var(--border); border-radius: 5px; background: white; cursor: pointer; font-family: inherit; font-size: 0.83rem; transition: all 0.15s; }
     .page-btn:hover, .page-btn.active { background: var(--burg); color: white; border-color: var(--burg); }
     .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
     .page-info { color: var(--text-muted); font-size: 0.82rem; }
 
-    /* LIGHTBOX */
     .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; }
     .lightbox.active { display: flex; }
     .lightbox img { max-width: 70vw; max-height: 70vh; object-fit: contain; border-radius: 10px; }
@@ -173,14 +243,17 @@
     <img src="https://res.cloudinary.com/dmmj4nmxp/image/upload/v1771907606/Captura_de_pantalla_2026-02-23_232840_m1jg3p.png" style="height:38px;width:auto;display:block;" alt="Logo" />
   </div>
   <div class="header-title">Catalogo de Productos</div>
-  <div></div>
+  <div id="rt-badge" class="rt-badge connecting">
+    <span class="rt-dot"></span>
+    <span id="rt-label">Conectando...</span>
+  </div>
 </header>
 
 <div class="toolbar">
   <div class="toolbar-inner">
     <div class="search-wrap">
       <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input class="search-input" id="search" type="text" placeholder="Buscar por Modelo..." />
+      <input class="search-input" id="search" type="text" placeholder="Buscar modelo, marca, línea, funciones..." />
     </div>
     <div class="cb-dropdown" id="dd-marca">
       <button class="cb-dropdown-btn" id="dd-marca-btn">Todas las marcas</button>
@@ -241,9 +314,12 @@
   <img id="lightbox-img" src="" alt="" />
 </div>
 
+<div class="toast-container" id="toast-container"></div>
+
 <script>
-  var SB_URL = "https://mywtmrwjzwpwkctixnzi.supabase.co/rest/v1/productos";
-  var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15d3Rtcndqendwd2tjdGl4bnppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NTQ4NDYsImV4cCI6MjA4NzUzMDg0Nn0.jdA2J-YUuRqnqj5-4l7yxGn_VoOX6C5Jwvn7k4l_ZgA";
+  var SB_URL  = "https://mywtmrwjzwpwkctixnzi.supabase.co";
+  var SB_KEY  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15d3Rtcndqendwd2tjdGl4bnppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NTQ4NDYsImV4cCI6MjA4NzUzMDg0Nn0.jdA2J-YUuRqnqj5-4l7yxGn_VoOX6C5Jwvn7k4l_ZgA";
+  var REST_URL = SB_URL + "/rest/v1/productos";
   var H = { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY };
   var PAGE_SIZE = 15;
   var allData = [], filtered = [], currentPage = 1;
@@ -251,6 +327,134 @@
   var dropdownValues = { marca:[], linea:[], serie:[] };
   var searchTimer = null;
 
+  // ─── TOAST ─────────────────────────────────────────────────────────────────
+  function showToast(msg, type) {
+    var c = document.getElementById("toast-container");
+    var t = document.createElement("div");
+    t.className = "toast" + (type ? " " + type : "");
+    t.textContent = msg;
+    c.appendChild(t);
+    requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add("show")); });
+    setTimeout(() => {
+      t.classList.remove("show");
+      setTimeout(() => t.remove(), 350);
+    }, 3500);
+  }
+
+  // ─── REALTIME BADGE ────────────────────────────────────────────────────────
+  function setRtStatus(state, label) {
+    var badge = document.getElementById("rt-badge");
+    var lbl   = document.getElementById("rt-label");
+    badge.className = "rt-badge " + state;
+    lbl.textContent = label;
+  }
+
+  // ─── REALTIME VÍA WEBSOCKET NATIVO (sin librería) ─────────────────────────
+  var _ws = null, _wsRef = null, _heartbeat = null, _msgRef = 1;
+
+  function initRealtime() {
+    setRtStatus("connecting", "Conectando...");
+    var wsUrl = "wss://mywtmrwjzwpwkctixnzi.supabase.co/realtime/v1/websocket?apikey=" + SB_KEY + "&vsn=1.0.0";
+    _wsRef = {};
+    var ws = new WebSocket(wsUrl);
+    _ws = ws;
+
+    ws.onopen = function() {
+      // Unirse al canal de postgres_changes
+      ws.send(JSON.stringify({
+        topic: "realtime:productos-changes",
+        event: "phx_join",
+        payload: {
+          config: {
+            postgres_changes: [{ event: "*", schema: "public", table: "productos" }]
+          }
+        },
+        ref: String(_msgRef++)
+      }));
+      // Heartbeat cada 25 seg para mantener viva la conexión
+      _heartbeat = setInterval(function() {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ topic: "phoenix", event: "heartbeat", payload: {}, ref: String(_msgRef++) }));
+        }
+      }, 25000);
+    };
+
+    ws.onmessage = function(e) {
+      var msg;
+      try { msg = JSON.parse(e.data); } catch(err) { return; }
+
+      if (msg.event === "phx_reply" && msg.payload && msg.payload.status === "ok") {
+        setRtStatus("connected", "En vivo");
+      }
+
+      if (msg.event === "postgres_changes" && msg.payload && msg.payload.data) {
+        handleRealtimeEvent(msg.payload.data);
+      }
+    };
+
+    ws.onclose = function() {
+      clearInterval(_heartbeat);
+      if (_ws === ws) {  // solo reconectar si no fue reemplazado
+        setRtStatus("disconnected", "Desconectado");
+        setTimeout(initRealtime, 5000);
+      }
+    };
+
+    ws.onerror = function() {
+      ws.close();
+    };
+  }
+
+  function handleRealtimeEvent(data) {
+    // data = { type: "INSERT"|"UPDATE"|"DELETE", record: {...}, old_record: {...} }
+    var ev = data.type;
+    var rec = data.record || {};
+    var old = data.old_record || {};
+
+    if (ev === "INSERT") {
+      if (!allData.find(function(r){ return r.id === rec.id; })) {
+        allData.push(rec);
+        rebuildDropdownValues();
+        applyFilter();
+        setTimeout(function(){ highlightRow(rec.id, "row-new"); }, 80);
+      }
+      showToast("➕ Nuevo producto: " + (rec.modelo || "sin modelo"), "");
+
+    } else if (ev === "UPDATE") {
+      var idx = allData.findIndex(function(r){ return r.id === rec.id; });
+      if (idx !== -1) allData[idx] = rec; else allData.push(rec);
+      rebuildDropdownValues();
+      applyFilter();
+      setTimeout(function(){ highlightRow(rec.id, "row-updated"); }, 80);
+      showToast("✏️ Actualizado: " + (rec.modelo || ""), "update");
+
+    } else if (ev === "DELETE") {
+      allData = allData.filter(function(r){ return r.id !== old.id; });
+      rebuildDropdownValues();
+      applyFilter();
+      showToast("🗑️ Eliminado: " + (old.modelo || ""), "delete");
+    }
+  }
+
+  function highlightRow(id, cls) {
+    var body = document.getElementById("table-body");
+    var rows = body.querySelectorAll(".tbl-row");
+    rows.forEach(function(row) {
+      if (row.dataset.id == id) {
+        row.classList.remove("row-new", "row-updated");
+        void row.offsetWidth; // force reflow
+        row.classList.add(cls);
+      }
+    });
+  }
+
+  function rebuildDropdownValues() {
+    dropdownValues.marca = extractDistinct(allData, "marca");
+    dropdownValues.linea  = extractDistinct(allData, "linea");
+    dropdownValues.serie  = extractDistinct(allData, "serie");
+  }
+
+  // ─── DATA FETCH ────────────────────────────────────────────────────────────
   async function fetchAll(url) {
     var headRes = await fetch(url + "&limit=1&offset=0", { headers: { ...H, "Prefer": "count=exact" } });
     var cr = headRes.headers.get("content-range");
@@ -322,28 +526,30 @@
     document.getElementById(id)?.addEventListener("click", e => e.stopPropagation());
   });
 
-  function applyFilter() {
-    var q = document.getElementById("search").value.toLowerCase().trim();
-    var ma = Object.keys(filterState.marca);
-    var li = Object.keys(filterState.linea);
-    var se = Object.keys(filterState.serie);
-    filtered = allData.filter(p => {
-      if(ma.length && !ma.includes(p.marca)) return false;
-      if(li.length && !li.includes(p.linea)) return false;
-      if(se.length && !se.includes(p.serie)) return false;
-      if(q && !(p.modelo||"").toLowerCase().includes(q)) return false;
-      return true;
-    }).sort((a,b) => {
+  function sortData(arr) {
+    return arr.slice().sort((a,b) => {
       var camA = /camara|cámara|camera|cam\b/i.test(a.linea||"") || /camara|cámara|camera|cam\b/i.test(a.serie||"") ? 1 : 0;
       var camB = /camara|cámara|camera|cam\b/i.test(b.linea||"") || /camara|cámara|camera|cam\b/i.test(b.serie||"") ? 1 : 0;
       if(camB !== camA) return camB - camA;
       return (b.imagen?1:0)-(a.imagen?1:0);
     });
+  }
+
+  function applyFilter() {
+    var q = document.getElementById("search").value.toLowerCase().trim();
+    var ma = Object.keys(filterState.marca);
+    var li = Object.keys(filterState.linea);
+    var se = Object.keys(filterState.serie);
+    filtered = sortData(allData.filter(p => {
+      if(ma.length && !ma.includes(p.marca)) return false;
+      if(li.length && !li.includes(p.linea)) return false;
+      if(se.length && !se.includes(p.serie)) return false;
+      if(q && ![ p.modelo, p.marca, p.linea, p.serie, p.funciones ].some(function(f){ return (f||"").toLowerCase().includes(q); })) return false;
+      return true;
+    }));
     currentPage = 1;
     render(); paginate();
   }
-
-  function esc(s) { return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
   function price(val, cls) {
     var n = parseFloat(val);
@@ -401,6 +607,7 @@
     filtered.slice(s,e).forEach(function(p) {
       var row = document.createElement("div");
       row.className = "tbl-row";
+      row.dataset.id = p.id;  // ← para poder resaltar la fila por id
       row.style.cssText = "display:flex;flex-direction:row;align-items:stretch;width:100%;border-bottom:1px solid #e0e0e0;";
 
       var func = (p.funciones||"");
@@ -485,6 +692,7 @@
   function exportData(src) {
     return src.map(p => ({ SAP:p.sap||"", Modelo:p.modelo||"", Marca:p.marca||"", Linea:p.linea||"", Serie:p.serie||"", Funciones:p.funciones||"", "Diamond USD":p.diamond_usd||"", "Black USD":p.black_usd||"", "Platinum USD":p.platinum_usd||"", "Gold USD":p.gold_gremio_usd||"" }));
   }
+
   document.getElementById("btn-export").addEventListener("click", e => {
     e.stopPropagation();
     var panel = document.getElementById("dd-export-panel");
@@ -501,36 +709,36 @@
     var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"})); a.download="catalogo.csv"; a.click();
     closeAll();
   });
-  document.getElementById("search").addEventListener("input", () => { clearTimeout(searchTimer); searchTimer = setTimeout(applyFilter, 300); });
+
+  document.getElementById("search").addEventListener("input", applyFilter);
 
   function openLB(el) { document.getElementById("lightbox-img").src=el.dataset.foto; document.getElementById("lightbox").classList.add("active"); }
   document.getElementById("lightbox").addEventListener("click", () => document.getElementById("lightbox").classList.remove("active"));
   document.getElementById("lightbox-close").addEventListener("click", () => document.getElementById("lightbox").classList.remove("active"));
 
+  // ─── INICIO ────────────────────────────────────────────────────────────────
   async function start() {
     buildHeader();
-
     try {
       document.getElementById("loading-msg").textContent = "Cargando productos...";
-      allData = await fetchAll(SB_URL+"?select=*");
-      dropdownValues.marca = extractDistinct(allData, "marca");
-      dropdownValues.linea  = extractDistinct(allData, "linea");
-      dropdownValues.serie  = extractDistinct(allData, "serie");
+      allData = await fetchAll(REST_URL+"?select=*");
+      rebuildDropdownValues();
       buildDropdown("marca","Todas las marcas");
       buildDropdown("linea","Todas las lineas");
       buildDropdown("serie","Todas las series");
-      filtered = allData.slice().sort((a,b) => {
-        var camA = /camara|cámara|camera|cam\b/i.test(a.linea||"") || /camara|cámara|camera|cam\b/i.test(a.serie||"") ? 1 : 0;
-        var camB = /camara|cámara|camera|cam\b/i.test(b.linea||"") || /camara|cámara|camera|cam\b/i.test(b.serie||"") ? 1 : 0;
-        if(camB !== camA) return camB - camA;
-        return (b.imagen?1:0)-(a.imagen?1:0);
-      });
+      filtered = sortData(allData);
       render(); paginate();
       document.getElementById("loading-bar").classList.remove("active");
+
+      // Iniciar Realtime DESPUÉS de cargar los datos
+      initRealtime();
+
     } catch(err) {
       document.getElementById("loading-msg").textContent = "Error: "+err.message;
+      setRtStatus("disconnected", "Error");
     }
   }
+
   start();
 </script>
 
