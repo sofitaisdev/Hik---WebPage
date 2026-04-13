@@ -733,7 +733,7 @@
 
   // ─── LIGHTBOX ────────────────────────────────────────────────────────────
   function openLB(el) { document.getElementById('lightbox-img').src=el.dataset.foto; document.getElementById('lightbox').classList.add('active'); }
-  document.getElementById('lightbox').addEventListener('click', function(){ document.getElementById('lightbox').classList.remove('active'); });
+  document.getElementByI ('lightbox').addEventListener('click', function(){ document.getElementById('lightbox').classList.remove('active'); });
   document.getElementById('lightbox-close').addEventListener('click', function(){ document.getElementById('lightbox').classList.remove('active'); });
 
   // ─── REALTIME ────────────────────────────────────────────────────────────
