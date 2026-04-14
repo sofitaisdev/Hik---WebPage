@@ -3,196 +3,171 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>- Catálogo Hikvision -</title>
+  <title>Catálogo Hikvision</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
-  <style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --burg:#800000; --burg-dark:#5a0000; --cream:#f5f5f5; --border:#e0e0e0; --text:#1a1a1a; --muted:#888; }
-    html,body { height:100%; }
-    body { font-family:"Inter",sans-serif; background:var(--cream); color:var(--text); display:flex; flex-direction:column; overflow:hidden; font-size:12px; }
+    :root {
+      --burg: #800000; --burg-dark: #5a0000;
+      --cream: #f5f5f5; --border: #e0e0e0; --text: #1a1a1a; --text-muted: #888;
+    }
+    html, body { height: 100%; }
+    body { font-family: "Inter", sans-serif; background: var(--cream); color: var(--text); display: flex; flex-direction: column; overflow: hidden; }
 
-    /* LOGIN */
-    #login-overlay { position:fixed; inset:0; background:#f0f0f0; z-index:9999; display:flex; align-items:center; justify-content:center; }
-    .login-card { background:white; border-radius:16px; padding:44px 36px; width:390px; max-width:calc(100vw - 32px); box-shadow:0 8px 48px rgba(0,0,0,.12); text-align:center; border-top:4px solid var(--burg); }
-    .login-card img { height:44px; margin:0 auto 20px; display:block; }
-    .login-card h2 { font-size:1rem; font-weight:700; color:var(--burg); margin-bottom:4px; }
-    .login-card p  { font-size:.82rem; color:var(--muted); margin-bottom:22px; }
-    .login-alert { display:none; padding:9px 12px; border-radius:7px; font-size:.82rem; font-weight:500; margin-bottom:12px; }
-    .login-alert.err  { background:#fef2f2; color:#991b1b; border:1px solid #fecaca; }
-    .login-alert.warn { background:#fffbeb; color:#92400e; border:1px solid #fde68a; }
-    .login-input { width:100%; padding:10px 13px; border:1.5px solid var(--border); border-radius:8px; font-size:.9rem; font-family:inherit; outline:none; margin-bottom:10px; transition:border-color .2s; }
-    .login-input:focus { border-color:var(--burg); }
-    .login-btn { width:100%; padding:11px; background:var(--burg); color:white; border:none; border-radius:9px; font-size:.9rem; font-weight:700; cursor:pointer; font-family:inherit; margin-bottom:14px; transition:background .18s; }
-    .login-btn:hover { background:var(--burg-dark); }
-    .login-btn:disabled { opacity:.55; cursor:not-allowed; }
-    .login-sep { border:none; border-top:1px solid #eee; margin:4px 0 14px; }
-    .guest-btn { width:100%; padding:9px; background:transparent; color:#888; border:1px solid #ddd; border-radius:9px; font-size:.82rem; cursor:pointer; font-family:inherit; transition:border-color .18s,color .18s; }
-    .guest-btn:hover { border-color:var(--burg); color:var(--burg); }
+    /* ── LOGIN OVERLAY ── */
+    #login-overlay {
+      position: fixed; inset: 0; background: #f0f0f0;
+      z-index: 9999; display: flex; align-items: center; justify-content: center;
+    }
+    .login-card {
+      background: white; border-radius: 16px; padding: 44px 36px;
+      width: 390px; max-width: calc(100vw - 32px);
+      box-shadow: 0 8px 48px rgba(0,0,0,.12); text-align: center;
+      border-top: 4px solid var(--burg);
+    }
+    .login-card img { height: 44px; margin: 0 auto 20px; display: block; }
+    .login-card h2 { font-size: 1rem; font-weight: 700; color: var(--burg); margin-bottom: 4px; }
+    .login-card p { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 22px; }
+    .login-alert { display: none; padding: 9px 12px; border-radius: 7px; font-size: 0.82rem; font-weight: 500; margin-bottom: 12px; }
+    .login-alert.err { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+    .login-alert.warn { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .login-input {
+      width: 100%; padding: 10px 13px; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: 0.9rem; font-family: inherit;
+      outline: none; margin-bottom: 10px; transition: border-color .2s;
+    }
+    .login-input:focus { border-color: var(--burg); }
+    .login-btn {
+      width: 100%; padding: 11px; background: var(--burg); color: white; border: none;
+      border-radius: 9px; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+      font-family: inherit; margin-bottom: 14px; transition: background .18s;
+    }
+    .login-btn:hover { background: var(--burg-dark); }
+    .login-btn:disabled { opacity: .55; cursor: not-allowed; }
+    .login-sep { border: none; border-top: 1px solid #eee; margin: 4px 0 14px; }
+    .guest-btn {
+      width: 100%; padding: 9px; background: transparent; color: #888;
+      border: 1px solid #ddd; border-radius: 9px; font-size: 0.82rem;
+      cursor: pointer; font-family: inherit; transition: border-color .18s, color .18s;
+    }
+    .guest-btn:hover { border-color: var(--burg); color: var(--burg); }
 
-    /* ROLE PILL */
-    .role-pill { font-size:.68rem; font-weight:700; padding:2px 9px; border-radius:20px; text-transform:uppercase; letter-spacing:.08em; flex-shrink:0; }
-    .role-diamond { background:#dbeafe; color:#1d4ed8; }
-    .role-black   { background:#1a1a1a; color:#fff; }
-    .role-platino { background:#ede9fe; color:#6d28d9; }
-    .role-ruby    { background:#ffe4e6; color:#be123c; }
-    .role-gold    { background:#fef3c7; color:#92400e; }
-    .role-guest   { background:#f3f4f6; color:#6b7280; }
+    /* ── ROLE BADGE ── */
+    .role-pill {
+      font-size: 0.7rem; font-weight: 700; padding: 2px 9px; border-radius: 20px;
+      text-transform: uppercase; letter-spacing: .08em; flex-shrink: 0;
+    }
+    .role-diamond { background: #dbeafe; color: #1d4ed8; }
+    .role-black   { background: #1a1a1a; color: #fff; }
+    .role-platino { background: #ede9fe; color: #6d28d9; }
+    .role-ruby    { background: #ffe4e6; color: #be123c; }
+    .role-gold    { background: #fef3c7; color: #92400e; }
+    .role-guest   { background: #f3f4f6; color: #6b7280; }
 
-    /* HEADER */
-    .header { background:#fff; padding:10px 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 3px 12px rgba(0,0,0,.10); border-bottom:2px solid var(--burg); flex-shrink:0; }
-    .header-title { color:var(--burg); font-weight:700; font-size:.85rem; letter-spacing:.15em; text-transform:uppercase; position:absolute; left:50%; transform:translateX(-50%); }
-    .header-right { display:flex; align-items:center; gap:8px; }
-    .usr-badge { font-size:.72rem; color:#666; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .logout-btn { display:none; padding:4px 10px; background:white; border:1px solid #ddd; border-radius:6px; font-size:.72rem; cursor:pointer; font-family:inherit; color:#666; transition:all .2s; }
-    .logout-btn:hover { border-color:var(--burg); color:var(--burg); }
-    .rt-badge { display:flex; align-items:center; gap:5px; font-size:.68rem; color:#555; padding:3px 9px; border-radius:20px; border:1px solid var(--border); background:#fafafa; }
-    .rt-badge.connected    { color:#1a7a3c; border-color:#b8e8cc; background:#f0faf4; }
-    .rt-badge.connecting   { color:#a07010; border-color:#f0d890; background:#fffbec; }
-    .rt-badge.disconnected { color:#cc3333; border-color:#f5c0c0; background:#fff5f5; }
-    .rt-dot { width:7px; height:7px; border-radius:50%; background:#ccc; flex-shrink:0; }
+    /* ── HEADER ── */
+    .header {
+      background: #fff; padding: 10px 32px; display: flex; align-items: center;
+      justify-content: space-between; position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 3px 12px rgba(0,0,0,.10); border-bottom: 2px solid var(--burg); flex-shrink: 0;
+    }
+    .logo-wrapper { display: flex; align-items: center; }
+    .header-title {
+      color: var(--burg); font-weight: 700; font-size: 0.9rem; letter-spacing: .15em;
+      text-transform: uppercase; position: absolute; left: 50%; transform: translateX(-50%);
+    }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .usr-badge { font-size: 0.75rem; color: #666; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .logout-btn {
+      display: none; padding: 5px 12px; background: white; border: 1px solid #ddd;
+      border-radius: 6px; font-size: 0.78rem; cursor: pointer; font-family: inherit;
+      color: #666; transition: all .2s;
+    }
+    .logout-btn:hover { border-color: var(--burg); color: var(--burg); }
+    .rt-badge { display:flex; align-items:center; gap:6px; font-size:.72rem; color:#555; padding:4px 10px; border-radius:20px; border:1px solid var(--border); background:#fafafa; transition:all .3s; }
+    .rt-badge.connected   { color:#1a7a3c; border-color:#b8e8cc; background:#f0faf4; }
+    .rt-badge.connecting  { color:#a07010; border-color:#f0d890; background:#fffbec; }
+    .rt-badge.disconnected{ color:#cc3333; border-color:#f5c0c0; background:#fff5f5; }
+    .rt-dot { width:8px; height:8px; border-radius:50%; background:#ccc; transition:background .3s; flex-shrink:0; }
     .rt-badge.connected .rt-dot    { background:#1a7a3c; animation:pulse-green 2s infinite; }
     .rt-badge.connecting .rt-dot   { background:#c09020; animation:pulse-amber 1s infinite; }
     .rt-badge.disconnected .rt-dot { background:#cc3333; }
     @keyframes pulse-green { 0%,100%{box-shadow:0 0 0 0 rgba(26,122,60,.4)}50%{box-shadow:0 0 0 5px rgba(26,122,60,0)}}
     @keyframes pulse-amber { 0%,100%{box-shadow:0 0 0 0 rgba(192,144,32,.4)}50%{box-shadow:0 0 0 5px rgba(192,144,32,0)}}
 
-    /* TOAST */
     .toast-container { position:fixed; bottom:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
-    .toast { padding:10px 16px; border-radius:8px; font-size:.78rem; font-weight:500; color:white; background:#1a7a3c; box-shadow:0 4px 16px rgba(0,0,0,.2); transform:translateX(120%); transition:transform .3s cubic-bezier(.34,1.56,.64,1); }
+    .toast { padding:10px 16px; border-radius:8px; font-size:.82rem; font-weight:500; color:white; background:#1a7a3c; box-shadow:0 4px 16px rgba(0,0,0,.2); transform:translateX(120%); transition:transform .3s cubic-bezier(.34,1.56,.64,1); pointer-events:none; }
     .toast.show   { transform:translateX(0); }
     .toast.update { background:#1a5a9a; }
     .toast.error  { background:#8a2020; }
 
-    /* TOOLBAR */
-    .toolbar { background:white; padding:7px 24px; border-bottom:1px solid var(--border); box-shadow:0 1px 4px rgba(0,0,0,.06); flex-shrink:0; }
-    .toolbar-inner { display:flex; gap:6px; align-items:center; }
-    .search-wrap { flex:0 0 26%; position:relative; }
-    .search-icon { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--muted); }
-    .search-spinner { position:absolute; right:9px; top:50%; transform:translateY(-50%); display:none; }
+    .toolbar { background:white; padding:8px 32px; border-bottom:1px solid var(--border); box-shadow:0 1px 4px rgba(0,0,0,.06); flex-shrink:0; }
+    .toolbar-inner { display:flex; gap:8px; align-items:center; }
+    .search-wrap { flex:0 0 30%; position:relative; }
+    .search-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--text-muted); }
+    .search-spinner { position:absolute; right:10px; top:50%; transform:translateY(-50%); display:none; }
     .search-spinner.active { display:block; }
-    .search-input { width:100%; padding:7px 32px 7px 34px; font-size:.8rem; font-family:inherit; border:1.5px solid var(--border); border-radius:6px; outline:none; transition:border-color .2s; background:#fafafa; }
+    .search-input { width:100%; padding:9px 36px 9px 38px; font-size:.88rem; font-family:inherit; border:1.5px solid var(--border); border-radius:6px; outline:none; transition:border-color .2s; background:#fafafa; }
     .search-input:focus { border-color:var(--burg); background:white; }
     .cb-dropdown { position:relative; flex:1; }
-    .cb-dropdown-btn { width:100%; padding:7px 28px 7px 10px; border:1.5px solid var(--border); border-radius:6px; font-size:.78rem; font-family:inherit; cursor:pointer; background:#fafafa url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23800000' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 9px center; text-align:left; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:border-color .2s; }
+    .cb-dropdown-btn { width:100%; padding:9px 30px 9px 12px; border:1.5px solid var(--border); border-radius:6px; font-size:.85rem; font-family:inherit; cursor:pointer; background:#fafafa url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23800000' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 10px center; text-align:left; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; transition:border-color .2s; }
     .cb-dropdown-btn:hover,.cb-dropdown-btn.open { border-color:var(--burg); background-color:white; }
     .cb-dropdown-btn.has-selection { border-color:var(--burg); color:var(--burg); font-weight:600; }
-    .cb-dropdown-panel { display:none; position:absolute; top:calc(100% + 2px); left:0; min-width:100%; max-width:280px; background:white; border:1.5px solid var(--burg); border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,.12); z-index:300; overflow:hidden; }
+    .cb-dropdown-panel { display:none; position:absolute; top:calc(100% + 2px); left:0; min-width:100%; max-width:300px; background:white; border:1.5px solid var(--burg); border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,.12); z-index:300; overflow:hidden; }
     .cb-dropdown-panel.open { display:block; }
-    .cb-panel-search { padding:7px; border-bottom:1px solid var(--border); }
-    .cb-panel-search input { width:100%; padding:4px 8px; border:1px solid var(--border); border-radius:5px; font-family:inherit; font-size:.78rem; outline:none; }
-    .cb-panel-list { max-height:220px; overflow-y:auto; padding:3px 0; }
+    .cb-panel-search { padding:8px; border-bottom:1px solid var(--border); }
+    .cb-panel-search input { width:100%; padding:5px 9px; border:1px solid var(--border); border-radius:5px; font-family:inherit; font-size:.82rem; outline:none; }
+    .cb-panel-list { max-height:240px; overflow-y:auto; padding:4px 0; }
     .cb-panel-list::-webkit-scrollbar { width:4px; }
     .cb-panel-list::-webkit-scrollbar-thumb { background:var(--burg); border-radius:4px; }
-    .cb-panel-item { display:flex; align-items:center; gap:7px; padding:5px 11px; cursor:pointer; font-size:.78rem; user-select:none; }
+    .cb-panel-item { display:flex; align-items:center; gap:8px; padding:6px 12px; cursor:pointer; font-size:.84rem; user-select:none; }
     .cb-panel-item:hover { background:#fdf0f0; }
-    .cb-panel-item input[type="checkbox"] { accent-color:var(--burg); width:13px; height:13px; flex-shrink:0; }
-    .cb-panel-footer { padding:4px 11px 6px; border-top:1px solid var(--border); display:flex; justify-content:space-between; }
-    .cb-count-label { font-size:.72rem; color:var(--muted); }
-    .cb-clear-btn { font-size:.72rem; color:var(--burg); background:none; border:none; cursor:pointer; font-family:inherit; font-weight:700; }
-    .btn-green { padding:7px 14px; font-size:.78rem; font-weight:700; font-family:inherit; border-radius:6px; cursor:pointer; border:none; background:#1a7a3c; color:white; display:flex; align-items:center; gap:5px; white-space:nowrap; }
+    .cb-panel-item input[type="checkbox"] { accent-color:var(--burg); width:14px; height:14px; flex-shrink:0; }
+    .cb-panel-footer { padding:5px 12px 7px; border-top:1px solid var(--border); display:flex; justify-content:space-between; }
+    .cb-count-label { font-size:.75rem; color:var(--text-muted); }
+    .cb-clear-btn { font-size:.78rem; color:var(--burg); background:none; border:none; cursor:pointer; font-family:inherit; font-weight:700; }
+    .btn-green { padding:9px 16px; font-size:.85rem; font-weight:700; font-family:inherit; border-radius:6px; cursor:pointer; border:none; background:#1a7a3c; color:white; display:flex; align-items:center; gap:6px; white-space:nowrap; }
     .btn-green:hover { background:#145c2c; }
-
-    /* STATUS BAR */
-    .status-bar { padding:2px 24px; background:#fff8f8; border-bottom:1px solid var(--border); min-height:20px; flex-shrink:0; }
-    .loading-bar { display:none; align-items:center; gap:7px; color:var(--burg); font-size:.75rem; font-weight:500; }
+    .status-bar { padding:3px 32px; background:#fff8f8; border-bottom:1px solid var(--border); min-height:22px; flex-shrink:0; }
+    .loading-bar { display:none; align-items:center; gap:8px; color:var(--burg); font-size:.83rem; font-weight:500; }
     .loading-bar.active { display:flex; }
-    .spinner { width:12px; height:12px; border:2px solid #f0d0d0; border-top-color:var(--burg); border-radius:50%; animation:spin .7s linear infinite; }
+    .spinner { width:14px; height:14px; border:2.5px solid #f0d0d0; border-top-color:var(--burg); border-radius:50%; animation:spin .7s linear infinite; }
     @keyframes spin { to{transform:rotate(360deg)} }
-
-    /* LAYOUT */
-    main { padding:8px 24px 4px; overflow:hidden; flex:1; display:flex; flex-direction:column; min-height:0; }
+    main { padding:10px 32px 6px; overflow-x:auto; flex:1; display:flex; flex-direction:column; min-height:0; }
     .card { background:white; border-radius:10px; box-shadow:0 2px 16px rgba(0,0,0,.08); overflow:hidden; display:flex; flex-direction:column; flex:1; min-height:0; }
-    .tbl-wrap { overflow:auto; flex:1; min-height:0; }
-    .tbl-wrap::-webkit-scrollbar { width:6px; height:6px; }
-    .tbl-wrap::-webkit-scrollbar-thumb { background:#ccc; border-radius:6px; }
-
-    /* ═══ TABLA ═══ */
-    #data-table {
-      border-collapse: collapse;
-      table-layout: fixed;
-      width: 100%;
-      min-width: 900px;
-    }
-
-    /* THEAD — fondo bordó garantizado */
-    #data-table thead tr {
-      background: #BFBFBF;
-    }
-    #data-table thead th {
-      background: #800000;
-      color: #ffffff;
-      font-family: "Inter", sans-serif;
-      font-size: 9px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: .05em;
-      padding: 5px 3px;
-      text-align: center;
-      white-space: normal;
-      word-break: break-word;
-      line-height: 1.2;
-      border-right: 1px solid rgba(255,255,255,.25);
-      border-bottom: none;
-    }
-    #data-table thead th:first-child { border-radius: 0; }
-
-    /* TBODY */
-    #data-table tbody tr { border-bottom: 1px solid #ebebeb; }
-    #data-table tbody tr:nth-child(even) { background: #fafafa; }
-    #data-table tbody tr:hover { background: #fdf4f4 !important; }
-    #data-table tbody td {
-      font-family: "Inter", sans-serif;
-      font-size: 10px;
-      padding: 3px 4px;
-      border-right: 1px solid #f0f0f0;
-      vertical-align: middle;
-      overflow: hidden;
-    }
-    .td-left   { text-align: left; }
-    .td-center { text-align: center; }
-
-    /* Textos especiales */
-    .modelo-txt { font-weight:600; font-size:10px; line-height:1.3; color:#111; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-    .func-txt   { font-size:9px; color:#555; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-
-    /* Precios */
-    .price    { font-weight:700; font-size:10px; }
-    .p-diamond{ color:#2b7fd4; }
-    .p-black  { color:#111; }
-    .p-plat   { color:#7070a0; }
-    .p-ruby   { color:#be123c; }
-    .p-gold   { color:#b8860b; }
-    .p-map    { color:#065f46; }
-    .p-zero   { color:#ccc; font-weight:400; }
-
-    /* PAGINATION */
-    .pagination { display:flex; align-items:center; justify-content:center; gap:5px; padding:6px; background:white; border-top:1px solid var(--border); flex-wrap:wrap; flex-shrink:0; }
-    .page-btn { padding:4px 10px; border:1.5px solid var(--border); border-radius:5px; background:white; cursor:pointer; font-family:inherit; font-size:.75rem; transition:all .15s; }
+    .tbl-wrap { overflow-x:auto; overflow-y:auto; width:100%; flex:1; min-height:0; }
+    .tbl-wrap::-webkit-scrollbar { width:7px; height:7px; }
+    .tbl-wrap::-webkit-scrollbar-thumb { background:#bbb; border-radius:6px; }
+    .tbl-head,.tbl-row { display:flex; flex-direction:row; align-items:stretch; width:100%; }
+    .tbl-head { background:linear-gradient(90deg,var(--burg-dark),var(--burg)); position:sticky; top:0; z-index:10; }
+    .tbl-row { border-bottom:1px solid var(--border); transition:background .1s; }
+    .tbl-row:hover { background:#fdf5f5; }
+    .tbl-row:nth-child(even) { background:#fafafa; }
+    .tbl-row:nth-child(even):hover { background:#fdf5f5; }
+    .modelo-txt { font-weight:600; font-size:.75rem; line-height:1.35; color:#111; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .func-txt   { font-size:.68rem; color:#555; line-height:1.35; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+    .price { font-weight:700!important; font-size:.84rem; text-align:center; }
+    .p-diamond { color:#2b7fd4; } .p-black { color:#111; } .p-plat { color:#7070a0; }
+    .p-ruby { color:#be123c; } .p-gold { color:#b8860b; }
+    .p-map { color:#065f46; } .p-zero { color:#ccc; font-weight:400!important; }
+    .pagination { display:flex; align-items:center; justify-content:center; gap:6px; padding:7px; background:white; border-top:1px solid var(--border); flex-wrap:wrap; flex-shrink:0; }
+    .page-btn { padding:5px 11px; border:1.5px solid var(--border); border-radius:5px; background:white; cursor:pointer; font-family:inherit; font-size:.83rem; transition:all .15s; }
     .page-btn:hover,.page-btn.active { background:var(--burg); color:white; border-color:var(--burg); }
     .page-btn:disabled { opacity:.3; cursor:not-allowed; }
-    .page-info { color:var(--muted); font-size:.75rem; }
-
-    /* LIGHTBOX */
+    .page-info { color:var(--text-muted); font-size:.82rem; }
     .lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:1000; align-items:center; justify-content:center; }
     .lightbox.active { display:flex; }
     .lightbox img { max-width:70vw; max-height:70vh; object-fit:contain; border-radius:10px; }
     .lightbox-close { position:absolute; top:18px; right:24px; color:white; font-size:2.2rem; cursor:pointer; }
-
-    /* FOOTER INFO */
-    .footer-info { margin:4px 24px 6px; background:white; border-radius:10px; box-shadow:0 2px 16px rgba(0,0,0,.08); padding:10px 20px; flex-shrink:0; }
-    .footer-info-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
-    .footer-info p { font-size:.7rem; margin-bottom:2px; }
   </style>
 </head>
 <body>
 
-<!-- LOGIN -->
+<!-- ══════════ LOGIN OVERLAY ══════════ -->
 <div id="login-overlay">
   <div class="login-card">
     <img src="https://res.cloudinary.com/dmmj4nmxp/image/upload/v1771907606/Captura_de_pantalla_2026-02-23_232840_m1jg3p.png" alt="Hikvision" />
-    <h2>Catálogo de Productos</h2>
+    <h2>Catálogo de Productos !!!!!!!!!!</h2>
     <p>Iniciá sesión para ver tus precios</p>
     <div id="login-alert" class="login-alert"></div>
     <input id="login-email" class="login-input" type="email" placeholder="Email" autocomplete="email" />
@@ -203,121 +178,119 @@
   </div>
 </div>
 
-<!-- APP -->
+<!-- ══════════ APP ══════════ -->
 <div id="app" style="display:none;flex-direction:column;height:100%;overflow:hidden;">
 
-  <header class="header">
+<header class="header">
+  <div class="logo-wrapper">
+    <img src="https://res.cloudinary.com/dmmj4nmxp/image/upload/v1771907606/Captura_de_pantalla_2026-02-23_232840_m1jg3p.png" style="height:38px;width:auto;display:block;" alt="Logo" />
+  </div>
+  <div class="header-title">Catalogo de Productos</div>
+  <div class="header-right">
+    <span id="usr-badge" class="usr-badge"></span>
+    <span id="role-pill" class="role-pill role-guest" style="display:none;"></span>
+    <button id="btn-logout" class="logout-btn">Cerrar sesión</button>
+    <div id="rt-badge" class="rt-badge connecting">
+      <span class="rt-dot"></span>
+      <span id="rt-label">Conectando...</span>
+    </div>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="toolbar-inner">
+    <div class="search-wrap">
+      <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search-input" id="search" type="text" placeholder="Buscar modelo, marca, línea, funciones..." />
+      <div class="search-spinner" id="search-spinner"><div class="spinner"></div></div>
+    </div>
+    <div class="cb-dropdown" id="dd-marca">
+      <button class="cb-dropdown-btn" id="dd-marca-btn">Todas las marcas</button>
+      <div class="cb-dropdown-panel" id="dd-marca-panel">
+        <div class="cb-panel-search"><input type="text" id="dd-marca-search" placeholder="Buscar marca..." /></div>
+        <div class="cb-panel-list" id="dd-marca-list"></div>
+        <div class="cb-panel-footer"><span class="cb-count-label" id="dd-marca-count"></span><button class="cb-clear-btn" id="dd-marca-clear">Limpiar</button></div>
+      </div>
+    </div>
+    <div class="cb-dropdown" id="dd-linea">
+      <button class="cb-dropdown-btn" id="dd-linea-btn">Todas las lineas</button>
+      <div class="cb-dropdown-panel" id="dd-linea-panel">
+        <div class="cb-panel-search"><input type="text" id="dd-linea-search" placeholder="Buscar linea..." /></div>
+        <div class="cb-panel-list" id="dd-linea-list"></div>
+        <div class="cb-panel-footer"><span class="cb-count-label" id="dd-linea-count"></span><button class="cb-clear-btn" id="dd-linea-clear">Limpiar</button></div>
+      </div>
+    </div>
+    <div class="cb-dropdown" id="dd-serie">
+      <button class="cb-dropdown-btn" id="dd-serie-btn">Todas las series</button>
+      <div class="cb-dropdown-panel" id="dd-serie-panel">
+        <div class="cb-panel-search"><input type="text" id="dd-serie-search" placeholder="Buscar serie..." /></div>
+        <div class="cb-panel-list" id="dd-serie-list"></div>
+        <div class="cb-panel-footer"><span class="cb-count-label" id="dd-serie-count"></span><button class="cb-clear-btn" id="dd-serie-clear">Limpiar</button></div>
+      </div>
+    </div>
+    <div class="cb-dropdown" id="dd-export" style="flex:0 0 auto;">
+      <button class="btn-green" id="btn-export">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Exportar
+      </button>
+      <div class="cb-dropdown-panel" id="dd-export-panel" style="min-width:140px;">
+        <div class="cb-panel-item" id="exp-excel" style="font-weight:600;">Excel (.xlsx)</div>
+        <div class="cb-panel-item" id="exp-csv"   style="font-weight:600;">CSV (.csv)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <div class="loading-bar active" id="loading-bar">
+    <div class="spinner"></div>
+    <span id="loading-msg">Cargando...</span>
+  </div>
+</div>
+
+<main>
+  <div class="card">
+    <div class="tbl-wrap">
+      <div id="tbl-head"></div>
+      <div id="table-body"></div>
+    </div>
+    <div class="pagination" id="pagination"></div>
+  </div>
+</main>
+
+<div style="margin:4px 32px 6px;background:white;border-radius:10px;box-shadow:0 2px 16px rgba(0,0,0,.08);padding:12px 24px;flex-shrink:0;">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;">
     <div>
-      <img src="https://res.cloudinary.com/dmmj4nmxp/image/upload/v1771907606/Captura_de_pantalla_2026-02-23_232840_m1jg3p.png" style="height:36px;display:block;" alt="Logo" />
+      <p style="font-size:.78rem;font-weight:700;text-decoration:underline;margin-bottom:6px;color:#222;">Guía rápida — precios para instaladores:</p>
+      <p style="font-size:.78rem;font-weight:700;margin-bottom:3px;color:#222;">GREMIO</p>
+      <p style="font-size:.75rem;color:#444;margin-bottom:2px;">🔷 <strong>GOLD</strong> = Precio Gremio Regular</p>
+      <p style="font-size:.75rem;color:#444;margin-bottom:2px;">🔷 <strong>GOLD PLUS</strong> = compras &gt; USD 1.500 + IVA</p>
+      <p style="font-size:.75rem;color:#444;margin-bottom:6px;">🔷 <strong>GOLD PRIME</strong> = compras &gt; USD 2.500 + IVA</p>
+      <p style="font-size:.78rem;font-weight:700;margin-bottom:3px;color:#222;">CONSUMIDOR FINAL / MAP</p>
+      <p style="font-size:.75rem;color:#444;margin-bottom:2px;">🔷 <strong>MAP Web</strong> = para publicar en web del reseller</p>
+      <p style="font-size:.75rem;color:#444;margin-bottom:2px;">🔷 <strong>MAP/MELI</strong> = para MercadoLibre o ecommerce</p>
+      <p style="font-size:.75rem;color:#888;font-style:italic;">🟡 Excepto si hay promoción autorizada</p>
     </div>
-    <div class="header-title">Catalogo de Productos</div>
-    <div class="header-right">
-      <span id="usr-badge" class="usr-badge"></span>
-      <span id="role-pill" class="role-pill role-guest" style="display:none;"></span>
-      <button id="btn-logout" class="logout-btn">Cerrar sesión</button>
-      <div id="rt-badge" class="rt-badge connecting">
-        <span class="rt-dot"></span>
-        <span id="rt-label">Conectando...</span>
-      </div>
+    <div>
+      <p style="font-size:.78rem;font-weight:700;color:#c0392b;margin-bottom:6px;">📌 POLÍTICA DE PRECIOS</p>
+      <p style="font-size:.78rem;font-weight:700;margin-bottom:3px;color:#222;">💵 USD</p>
+      <p style="font-size:.75rem;color:#444;margin-bottom:2px;">🔷 Precio de referencia. Facturable en pesos al <strong>tipo de cambio vigente</strong></p>
+      <p style="font-size:.75rem;color:#444;margin-bottom:8px;">🔷 <strong>No incluye IVA</strong></p>
+      <p style="font-size:.78rem;font-weight:700;margin-bottom:3px;color:#222;">💲 PESOS (ARS)</p>
+      <p style="font-size:.75rem;color:#444;margin-bottom:2px;">🔷 Precio consumidor final. <strong>IVA incluido</strong></p>
+      <p style="font-size:.75rem;color:#444;margin-bottom:2px;">🔷 Listo para publicar al cliente</p>
+      <p style="font-size:.75rem;color:#888;font-style:italic;">🔷 Solo productos con sistema "SEG-RIGIDO"</p>
     </div>
-  </header>
-
-  <div class="toolbar">
-    <div class="toolbar-inner">
-      <div class="search-wrap">
-        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        <input class="search-input" id="search" type="text" placeholder="Buscar modelo, marca, línea, funciones..." />
-        <div class="search-spinner" id="search-spinner"><div class="spinner"></div></div>
-      </div>
-      <div class="cb-dropdown" id="dd-marca">
-        <button class="cb-dropdown-btn" id="dd-marca-btn">Todas las marcas</button>
-        <div class="cb-dropdown-panel" id="dd-marca-panel">
-          <div class="cb-panel-search"><input type="text" id="dd-marca-search" placeholder="Buscar marca..." /></div>
-          <div class="cb-panel-list" id="dd-marca-list"></div>
-          <div class="cb-panel-footer"><span class="cb-count-label" id="dd-marca-count"></span><button class="cb-clear-btn" id="dd-marca-clear">Limpiar</button></div>
-        </div>
-      </div>
-      <div class="cb-dropdown" id="dd-linea">
-        <button class="cb-dropdown-btn" id="dd-linea-btn">Todas las lineas</button>
-        <div class="cb-dropdown-panel" id="dd-linea-panel">
-          <div class="cb-panel-search"><input type="text" id="dd-linea-search" placeholder="Buscar linea..." /></div>
-          <div class="cb-panel-list" id="dd-linea-list"></div>
-          <div class="cb-panel-footer"><span class="cb-count-label" id="dd-linea-count"></span><button class="cb-clear-btn" id="dd-linea-clear">Limpiar</button></div>
-        </div>
-      </div>
-      <div class="cb-dropdown" id="dd-serie">
-        <button class="cb-dropdown-btn" id="dd-serie-btn">Todas las series</button>
-        <div class="cb-dropdown-panel" id="dd-serie-panel">
-          <div class="cb-panel-search"><input type="text" id="dd-serie-search" placeholder="Buscar serie..." /></div>
-          <div class="cb-panel-list" id="dd-serie-list"></div>
-          <div class="cb-panel-footer"><span class="cb-count-label" id="dd-serie-count"></span><button class="cb-clear-btn" id="dd-serie-clear">Limpiar</button></div>
-        </div>
-      </div>
-      <div class="cb-dropdown" id="dd-export" style="flex:0 0 auto;">
-        <button class="btn-green" id="btn-export">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
-          Exportar
-        </button>
-        <div class="cb-dropdown-panel" id="dd-export-panel" style="min-width:130px;">
-          <div class="cb-panel-item" id="exp-excel" style="font-weight:600;">Excel (.xlsx)</div>
-          <div class="cb-panel-item" id="exp-csv"   style="font-weight:600;">CSV (.csv)</div>
-        </div>
-      </div>
+    <div>
+      <p style="font-size:.78rem;font-weight:700;color:#c0392b;margin-bottom:6px;">📌 Política MAP</p>
+      <p style="font-size:.78rem;font-weight:700;margin-bottom:2px;color:#222;">✅ Aplica a:</p>
+      <p style="font-size:.75rem;color:#444;margin-bottom:8px;">Productos con <strong>SISTEMA DE PRECIOS = REGULADO</strong></p>
+      <p style="font-size:.78rem;font-weight:700;margin-bottom:2px;color:#222;">❌ No aplica a:</p>
+      <p style="font-size:.75rem;color:#444;margin-bottom:8px;">Productos con <strong>SISTEMA DE PRECIOS = DESREGULADO</strong></p>
+      <p style="font-size:.75rem;color:#666;font-style:italic;">Consulte con un asesor comercial o distribuidor oficial</p>
     </div>
   </div>
-
-  <div class="status-bar">
-    <div class="loading-bar active" id="loading-bar">
-      <div class="spinner"></div>
-      <span id="loading-msg">Cargando...</span>
-    </div>
-  </div>
-
-  <main>
-    <div class="card">
-      <div class="tbl-wrap">
-        <table id="data-table">
-          <thead><tr id="tbl-head-row"></tr></thead>
-          <tbody id="tbl-body"></tbody>
-        </table>
-      </div>
-      <div class="pagination" id="pagination"></div>
-    </div>
-  </main>
-
-  <div class="footer-info">
-    <div class="footer-info-grid">
-      <div>
-        <p style="font-weight:700;text-decoration:underline;margin-bottom:5px;color:#222;">Guía rápida — precios para instaladores:</p>
-        <p style="font-weight:700;margin-bottom:2px;color:#222;">GREMIO</p>
-        <p style="color:#444;margin-bottom:1px;">🔷 <strong>GOLD</strong> = Precio Gremio Regular</p>
-        <p style="color:#444;margin-bottom:1px;">🔷 <strong>GOLD PLUS</strong> = compras &gt; USD 1.500 + IVA</p>
-        <p style="color:#444;margin-bottom:5px;">🔷 <strong>GOLD PRIME</strong> = compras &gt; USD 2.500 + IVA</p>
-        <p style="font-weight:700;margin-bottom:2px;color:#222;">CONSUMIDOR FINAL / MAP</p>
-        <p style="color:#444;margin-bottom:1px;">🔷 <strong>MAP Web</strong> = para publicar en web del reseller</p>
-        <p style="color:#444;margin-bottom:1px;">🔷 <strong>MAP/MELI</strong> = para MercadoLibre o ecommerce</p>
-        <p style="color:#888;font-style:italic;">🟡 Excepto si hay promoción autorizada</p>
-      </div>
-      <div>
-        <p style="font-weight:700;color:#c0392b;margin-bottom:5px;">📌 POLÍTICA DE PRECIOS</p>
-        <p style="font-weight:700;margin-bottom:2px;color:#222;">💵 USD</p>
-        <p style="color:#444;margin-bottom:1px;">🔷 Precio de referencia. Facturable en pesos al <strong>tipo de cambio vigente</strong></p>
-        <p style="color:#444;margin-bottom:7px;">🔷 <strong>No incluye IVA</strong></p>
-        <p style="font-weight:700;margin-bottom:2px;color:#222;">💲 PESOS (ARS)</p>
-        <p style="color:#444;margin-bottom:1px;">🔷 Precio consumidor final. <strong>IVA incluido</strong></p>
-        <p style="color:#444;margin-bottom:1px;">🔷 Listo para publicar al cliente</p>
-        <p style="color:#888;font-style:italic;">🔷 Solo productos con sistema "SEG-RIGIDO"</p>
-      </div>
-      <div>
-        <p style="font-weight:700;color:#c0392b;margin-bottom:5px;">📌 Política MAP</p>
-        <p style="font-weight:700;margin-bottom:2px;color:#222;">✅ Aplica a:</p>
-        <p style="color:#444;margin-bottom:7px;">Productos con <strong>SISTEMA DE PRECIOS = REGULADO</strong></p>
-        <p style="font-weight:700;margin-bottom:2px;color:#222;">❌ No aplica a:</p>
-        <p style="color:#444;margin-bottom:7px;">Productos con <strong>SISTEMA DE PRECIOS = DESREGULADO</strong></p>
-        <p style="color:#666;font-style:italic;">Consulte con un asesor comercial o distribuidor oficial</p>
-      </div>
-    </div>
-  </div>
+</div>
 
 </div><!-- /#app -->
 
@@ -327,390 +300,478 @@
 </div>
 <div class="toast-container" id="toast-container"></div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-
+<script is:inline>
   var SB_URL = "https://mywtmrwjzwpwkctixnzi.supabase.co";
   var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15d3Rtcndqendwd2tjdGl4bnppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NTQ4NDYsImV4cCI6MjA4NzUzMDg0Nn0.jdA2J-YUuRqnqj5-4l7yxGn_VoOX6C5Jwvn7k4l_ZgA";
-  var H = { apikey:SB_KEY, Authorization:"Bearer "+SB_KEY, "Content-Type":"application/json" };
-  var sbClient = window.supabase.createClient(SB_URL, SB_KEY);
+  var H = { apikey: SB_KEY, Authorization: "Bearer " + SB_KEY, "Content-Type": "application/json" };
+  var sbClient = supabase.createClient(SB_URL, SB_KEY);
 
-  var PAGE_SIZE   = 20;
-  var currentPage = 1;
-  var totalCount  = 0;
-  var currentData = [];
-  var filterState = { marca:{}, linea:{}, serie:{} };
+  var PAGE_SIZE    = 20;
+  var currentPage  = 1;
+  var totalCount   = 0;
+  var currentData  = [];
+  var filterState  = { marca:{}, linea:{}, serie:{} };
   var dropdownValues = { marca:[], linea:[], serie:[] };
-  var debounceTimer = null;
-  var currentRole   = 'guest';
+  var debounceTimer  = null;
+  var currentRole    = 'guest';  // diamond | black | platino | ruby | gold | guest
 
-  // Columnas de precio — visibilidad por rol
+  // ─── PRICE COLUMNS CONFIG ─────────────────────────────────────────────────
+  // roles: every role that CAN see this column
   var ALL_PRICE_COLS = [
-    { label:'Diamond',    field:'diamond_usd',    cls:'p-diamond', roles:['diamond'] },
-    { label:'Black',      field:'black_usd',      cls:'p-black',   roles:['diamond','black'] },
-    { label:'Platinum',   field:'platinum_usd',   cls:'p-plat',    roles:['diamond','black','platino'] },
-    { label:'Ruby',       field:'ruby_usd',       cls:'p-ruby',    roles:['diamond','black','platino','ruby'] },
-    { label:'Gold',       field:'gold_gremio_usd',cls:'p-gold',    roles:['diamond','black','platino','ruby','gold'] },
-    { label:'MAP',        field:'map_usd',        cls:'p-map',     roles:['diamond','black','platino','ruby','gold','guest'] },
-    { label:'MAP Web',    field:'map_web_usd',    cls:'p-map',     roles:['diamond','black','platino','ruby','gold','guest'] },
-    { label:'Gold+',      field:'gold_plus_usd',  cls:'p-gold',    roles:['diamond','black','platino','ruby','gold'] },
-    { label:'Gold Prime', field:'gold_prime_usd', cls:'p-gold',    roles:['diamond','black','platino','ruby','gold'] },
-    { label:'MAP ARS',    field:'map_ars',        cls:'p-map',     roles:['diamond','black','platino','ruby','gold','guest'] },
-    { label:'MAP ML',     field:'map_ml_ars',     cls:'p-map',     roles:['diamond','black','platino','ruby','gold','guest'] }
+    { label:'Diamond',  field:'diamond_usd',    cls:'p-diamond', flex:1.1, roles:['diamond'] },
+    { label:'Black',    field:'black_usd',      cls:'p-black',   flex:1,   roles:['diamond','black'] },
+    { label:'Platinum', field:'platinum_usd',   cls:'p-plat',    flex:1.1, roles:['diamond','black','platino'] },
+    { label:'Ruby',     field:'ruby_usd',       cls:'p-ruby',    flex:1,   roles:['diamond','black','platino','ruby'] },
+    { label:'Gold',     field:'gold_gremio_usd',cls:'p-gold',    flex:1,   roles:['diamond','black','platino','ruby','gold'] },
+    { label:'MAP',      field:'map_usd',        cls:'p-map',     flex:1,   roles:['diamond','black','platino','ruby','gold','guest'] },
+    { label:'MAP Web',  field:'map_web_usd',    cls:'p-map',     flex:1.1, roles:['diamond','black','platino','ruby','gold','guest'] }
   ];
 
-  function visCols() {
+  function getVisiblePriceCols() {
     return ALL_PRICE_COLS.filter(function(c){ return c.roles.indexOf(currentRole) >= 0; });
   }
 
-  // LOGIN
-  function showAlert(msg, type) {
+  // ─── LOGIN ────────────────────────────────────────────────────────────────
+  function showLoginAlert(msg, type) {
     var el = document.getElementById('login-alert');
-    el.textContent = msg; el.className = 'login-alert '+(type||'err'); el.style.display = 'block';
+    el.textContent = msg;
+    el.className = 'login-alert ' + (type || 'err');
+    el.style.display = 'block';
   }
 
   document.getElementById('btn-login').addEventListener('click', async function() {
     var email = document.getElementById('login-email').value.trim().toLowerCase();
     var pass  = document.getElementById('login-pass').value;
-    if (!email || !pass) { showAlert('Completá email y contraseña.'); return; }
+    if (!email || !pass) { showLoginAlert('Completá email y contraseña.'); return; }
     var btn = this; btn.textContent = 'Ingresando...'; btn.disabled = true;
+
     try {
-      var auth = await sbClient.auth.signInWithPassword({ email:email, password:pass });
-      if (auth.error) { showAlert('Email o contraseña incorrectos.'); btn.textContent='Ingresar'; btn.disabled=false; return; }
-      var tok = auth.data.session.access_token;
-      var aH  = { apikey:SB_KEY, Authorization:'Bearer '+tok, 'Content-Type':'application/json' };
-      var r   = await (await fetch(SB_URL+'/rest/v1/usuarios?email=eq.'+encodeURIComponent(email)+'&select=rol&limit=1',{headers:aH})).json();
-      if (!Array.isArray(r)||r.code) r = await (await fetch(SB_URL+'/rest/v1/usuarios?email=eq.'+encodeURIComponent(email)+'&select=rol&limit=1',{headers:H})).json();
-      currentRole = (Array.isArray(r)&&r[0]&&r[0].rol) ? String(r[0].rol).toLowerCase() : 'guest';
+      // ── PASO 1: login con Supabase Auth ──────────────────────────────────
+      var authResult = await sbClient.auth.signInWithPassword({ email: email, password: pass });
+      console.log('[LOGIN] authResult:', JSON.stringify(authResult.error || 'OK'));
+
+      if (authResult.error) {
+        showLoginAlert('Email o contraseña incorrectos. (' + authResult.error.message + ')');
+        btn.textContent = 'Ingresar'; btn.disabled = false;
+        return;
+      }
+
+      // ── PASO 2: buscar rol usando el JWT del usuario autenticado ──────────
+      var userToken = authResult.data.session.access_token;
+      var authH = { apikey: SB_KEY, Authorization: 'Bearer ' + userToken, 'Content-Type': 'application/json' };
+
+      var res = await fetch(
+        SB_URL + '/rest/v1/usuarios?email=eq.' + encodeURIComponent(email) + '&select=rol&limit=1',
+        { headers: authH }
+      );
+      var rows = await res.json();
+      console.log('[LOGIN] usuarios query result:', JSON.stringify(rows));
+
+      // Si RLS bloqueó con el token del usuario, reintentamos con anon key
+      if (!Array.isArray(rows) || rows.code) {
+        var res2 = await fetch(
+          SB_URL + '/rest/v1/usuarios?email=eq.' + encodeURIComponent(email) + '&select=rol&limit=1',
+          { headers: H }
+        );
+        rows = await res2.json();
+        console.log('[LOGIN] usuarios query (anon fallback):', JSON.stringify(rows));
+      }
+
+      currentRole = (Array.isArray(rows) && rows[0] && rows[0].rol)
+        ? String(rows[0].rol).toLowerCase()
+        : 'guest';
+
+      console.log('[LOGIN] rol asignado:', currentRole);
       launchApp(email);
-    } catch(e) { showAlert('Error: '+e.message); btn.textContent='Ingresar'; btn.disabled=false; }
+
+    } catch(e) {
+      console.error('[LOGIN] error:', e);
+      showLoginAlert('Error de conexión: ' + e.message);
+      btn.textContent = 'Ingresar'; btn.disabled = false;
+    }
   });
-  document.getElementById('login-pass').addEventListener('keydown', function(e){ if(e.key==='Enter') document.getElementById('btn-login').click(); });
-  document.getElementById('btn-guest').addEventListener('click', function(){ currentRole='guest'; launchApp(null); });
-  document.getElementById('btn-logout').addEventListener('click', async function(){ await sbClient.auth.signOut(); location.reload(); });
+
+  document.getElementById('login-pass').addEventListener('keydown', function(e){
+    if (e.key === 'Enter') document.getElementById('btn-login').click();
+  });
+  document.getElementById('btn-guest').addEventListener('click', function() {
+    currentRole = 'guest'; launchApp(null);
+  });
+  document.getElementById('btn-logout').addEventListener('click', async function() {
+    await sbClient.auth.signOut(); location.reload();
+  });
 
   function launchApp(email) {
     document.getElementById('login-overlay').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
+    var app = document.getElementById('app');
+    app.style.display = 'flex';
+
     if (email) {
       document.getElementById('usr-badge').textContent = email;
       var pill = document.getElementById('role-pill');
-      var lbl = {diamond:'Diamond',black:'Black',platino:'Platinum',ruby:'Ruby',gold:'Gold',guest:'MAP'}[currentRole]||currentRole;
-      pill.textContent = lbl; pill.className = 'role-pill role-'+currentRole; pill.style.display = 'inline-block';
+      var roleLabel = { diamond:'Diamond', black:'Black', platino:'Platinum', ruby:'Ruby', gold:'Gold', guest:'MAP' }[currentRole] || currentRole;
+      pill.textContent = roleLabel;
+      pill.className = 'role-pill role-' + currentRole;
+      pill.style.display = 'inline-block';
       document.getElementById('btn-logout').style.display = 'block';
     }
     buildHeader();
     start();
   }
 
-  // TOAST / RT
+  // ─── TOAST ───────────────────────────────────────────────────────────────
   function showToast(msg, type) {
-    var c=document.getElementById('toast-container'), t=document.createElement('div');
-    t.className='toast'+(type?' '+type:''); t.textContent=msg; c.appendChild(t);
+    var c = document.getElementById('toast-container');
+    var t = document.createElement('div');
+    t.className = 'toast' + (type ? ' ' + type : '');
+    t.textContent = msg; c.appendChild(t);
     requestAnimationFrame(function(){ requestAnimationFrame(function(){ t.classList.add('show'); }); });
-    setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ t.remove(); },350); },3500);
+    setTimeout(function(){ t.classList.remove('show'); setTimeout(function(){ t.remove(); }, 350); }, 3500);
   }
-  function setRt(s,l){ document.getElementById('rt-badge').className='rt-badge '+s; document.getElementById('rt-label').textContent=l; }
 
-  // QUERY
+  function setRtStatus(state, label) {
+    document.getElementById('rt-badge').className = 'rt-badge ' + state;
+    document.getElementById('rt-label').textContent = label;
+  }
+
+  // ─── BUILD QUERY ─────────────────────────────────────────────────────────
   function buildQuery(page, limitOverride) {
-    var q=document.getElementById('search').value.trim();
-    var ma=Object.keys(filterState.marca), li=Object.keys(filterState.linea), se=Object.keys(filterState.serie);
-    var lim=limitOverride||PAGE_SIZE, off=limitOverride?0:(page-1)*PAGE_SIZE;
-    var url=SB_URL+'/rest/v1/productos?select=*&list_mark=eq.true';
-    if(ma.length===1) url+='&marca=eq.'+encodeURIComponent(ma[0]); else if(ma.length>1) url+='&marca=in.('+ma.map(encodeURIComponent).join(',')+')';
-    if(li.length===1) url+='&linea=eq.'+encodeURIComponent(li[0]); else if(li.length>1) url+='&linea=in.('+li.map(encodeURIComponent).join(',')+')';
-    if(se.length===1) url+='&serie=eq.'+encodeURIComponent(se[0]); else if(se.length>1) url+='&serie=in.('+se.map(encodeURIComponent).join(',')+')';
-    if(q) url+='&or=(modelo.ilike.*'+encodeURIComponent(q)+'*,funciones.ilike.*'+encodeURIComponent(q)+'*,marca.ilike.*'+encodeURIComponent(q)+'*,linea.ilike.*'+encodeURIComponent(q)+'*,serie.ilike.*'+encodeURIComponent(q)+'*)';
-    url+='&order=imagen.desc.nullslast,actualizado_en.desc&limit='+lim+'&offset='+off;
+    var q   = document.getElementById('search').value.trim();
+    var ma  = Object.keys(filterState.marca);
+    var li  = Object.keys(filterState.linea);
+    var se  = Object.keys(filterState.serie);
+    var lim = limitOverride || PAGE_SIZE;
+    var off = limitOverride ? 0 : (page - 1) * PAGE_SIZE;
+
+    // ★ list_mark filter: only show products with list_mark = true
+    var url = SB_URL + '/rest/v1/productos?select=*&list_mark=eq.true';
+
+    if (ma.length === 1) url += '&marca=eq.'  + encodeURIComponent(ma[0]);
+    else if (ma.length > 1) url += '&marca=in.(' + ma.map(encodeURIComponent).join(',') + ')';
+    if (li.length === 1) url += '&linea=eq.'  + encodeURIComponent(li[0]);
+    else if (li.length > 1) url += '&linea=in.(' + li.map(encodeURIComponent).join(',') + ')';
+    if (se.length === 1) url += '&serie=eq.'  + encodeURIComponent(se[0]);
+    else if (se.length > 1) url += '&serie=in.(' + se.map(encodeURIComponent).join(',') + ')';
+
+    if (q) {
+      url += '&or=(modelo.ilike.*' + encodeURIComponent(q) + '*' +
+             ',funciones.ilike.*'  + encodeURIComponent(q) + '*' +
+             ',marca.ilike.*'      + encodeURIComponent(q) + '*' +
+             ',linea.ilike.*'      + encodeURIComponent(q) + '*' +
+             ',serie.ilike.*'      + encodeURIComponent(q) + '*)';
+    }
+    url += '&order=actualizado_en.desc&limit=' + lim + '&offset=' + off;
     return url;
   }
 
+  // ─── FETCH ───────────────────────────────────────────────────────────────
   async function fetchPage(page) {
-    var res=await fetch(buildQuery(page),{headers:{...H,'Prefer':'count=exact'},cache:'no-store'});
-    var data=await res.json(), cr=res.headers.get('content-range');
-    return { data:Array.isArray(data)?data:[], total:cr?parseInt(cr.split('/')[1]):(Array.isArray(data)?data.length:0) };
+    var url = buildQuery(page);
+    var res = await fetch(url, { headers: { ...H, 'Prefer': 'count=exact' }, cache: 'no-store' });
+    var data = await res.json();
+    var cr   = res.headers.get('content-range');
+    var total = cr ? parseInt(cr.split('/')[1]) : (Array.isArray(data) ? data.length : 0);
+    return { data: Array.isArray(data) ? data : [], total: total };
   }
 
   async function fetchDropdownValues() {
-    var rows=await(await fetch(SB_URL+'/rest/v1/productos?select=marca,linea,serie&list_mark=eq.true',{headers:H,cache:'no-store'})).json();
-    if(!Array.isArray(rows)) return;
-    ['marca','linea','serie'].forEach(function(k){
-      dropdownValues[k]=[...new Set(rows.map(function(r){return r[k];}).filter(Boolean))].sort(function(a,b){return a.localeCompare(b);});
-    });
+    var res  = await fetch(SB_URL + '/rest/v1/productos?select=marca,linea,serie&list_mark=eq.true', { headers: H, cache: 'no-store' });
+    var rows = await res.json();
+    if (!Array.isArray(rows)) return;
+    dropdownValues.marca = [...new Set(rows.map(function(r){ return r.marca; }).filter(Boolean))].sort(function(a,b){ return a.localeCompare(b); });
+    dropdownValues.linea  = [...new Set(rows.map(function(r){ return r.linea; }).filter(Boolean))].sort(function(a,b){ return a.localeCompare(b); });
+    dropdownValues.serie  = [...new Set(rows.map(function(r){ return r.serie; }).filter(Boolean))].sort(function(a,b){ return a.localeCompare(b); });
   }
 
+  // ─── SEARCH ──────────────────────────────────────────────────────────────
   async function doSearch(page) {
-    currentPage=page||1;
+    currentPage = page || 1;
     document.getElementById('search-spinner').classList.add('active');
     document.getElementById('loading-bar').classList.add('active');
-    document.getElementById('loading-msg').textContent='Buscando...';
+    document.getElementById('loading-msg').textContent = 'Buscando...';
     try {
-      var r=await fetchPage(currentPage);
-      currentData=r.data; totalCount=r.total;
+      var result = await fetchPage(currentPage);
+      currentData = result.data; totalCount = result.total;
       render(); paginate();
-    } catch(err){ showToast('Error: '+err.message,'error'); }
+    } catch(err) { showToast('Error: ' + err.message, 'error'); }
     finally {
       document.getElementById('search-spinner').classList.remove('active');
       document.getElementById('loading-bar').classList.remove('active');
     }
   }
 
-  document.getElementById('search').addEventListener('input',function(){ clearTimeout(debounceTimer); debounceTimer=setTimeout(function(){ doSearch(1); },300); });
-  document.getElementById('search').addEventListener('keydown',function(e){ if(e.key==='Enter'){ clearTimeout(debounceTimer); doSearch(1); } });
+  document.getElementById('search').addEventListener('input', function() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function(){ doSearch(1); }, 300);
+  });
+  document.getElementById('search').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { clearTimeout(debounceTimer); doSearch(1); }
+  });
 
-  // DROPDOWNS
+  // ─── DROPDOWNS ───────────────────────────────────────────────────────────
   function buildDropdown(id, label) {
-    var btn=document.getElementById('dd-'+id+'-btn'), panel=document.getElementById('dd-'+id+'-panel');
-    var list=document.getElementById('dd-'+id+'-list'), si=document.getElementById('dd-'+id+'-search');
-    var cl=document.getElementById('dd-'+id+'-clear'), cnt=document.getElementById('dd-'+id+'-count');
-    function renderList(q){
-      q=(q||'').toLowerCase();
-      list.innerHTML=dropdownValues[id].filter(function(v){return !q||String(v).toLowerCase().includes(q);}).map(function(v,i){
-        var id2='cb-'+id+'-'+i;
-        return '<div class="cb-panel-item"><input type="checkbox" id="'+id2+'" value="'+String(v).replace(/'/g,'&#39;')+'" '+(filterState[id][v]?'checked':'')+'><label for="'+id2+'">'+v+'</label></div>';
-      }).join('')||'<div style="padding:8px 12px;color:#aaa;font-size:.78rem;">Sin resultados</div>';
+    var btn   = document.getElementById('dd-'+id+'-btn');
+    var panel = document.getElementById('dd-'+id+'-panel');
+    var list  = document.getElementById('dd-'+id+'-list');
+    var si    = document.getElementById('dd-'+id+'-search');
+    var cl    = document.getElementById('dd-'+id+'-clear');
+    var cnt   = document.getElementById('dd-'+id+'-count');
+
+    function renderList(q) {
+      q = (q||'').toLowerCase();
+      list.innerHTML = dropdownValues[id]
+        .filter(function(v){ return !q || String(v).toLowerCase().includes(q); })
+        .map(function(v,i) {
+          var id2 = 'cb-'+id+'-'+i;
+          return '<div class="cb-panel-item"><input type="checkbox" id="'+id2+'" value="'+String(v).replace(/'/g,'&#39;')+'" '+(filterState[id][v]?'checked':'')+"><label for='"+id2+"'>"+v+'</label></div>';
+        }).join('') || '<div style="padding:8px 12px;color:#aaa;font-size:.82rem;">Sin resultados</div>';
       list.querySelectorAll('input[type=checkbox]').forEach(function(cb){
-        cb.addEventListener('change',function(){
+        cb.addEventListener('change', function(){
           if(cb.checked) filterState[id][cb.value]=true; else delete filterState[id][cb.value];
           updateLabel(); doSearch(1);
         });
       });
     }
-    function updateLabel(){
-      var sel=Object.keys(filterState[id]);
-      btn.textContent=sel.length===0?label:sel.length===1?sel[0]:sel.length+' seleccionados';
-      btn.classList.toggle('has-selection',sel.length>0);
-      cnt.textContent=sel.length?sel.length+' selec.':'';
+    function updateLabel() {
+      var sel = Object.keys(filterState[id]);
+      btn.textContent = sel.length===0 ? label : sel.length===1 ? sel[0] : sel.length + ' seleccionados';
+      btn.classList.toggle('has-selection', sel.length > 0);
+      cnt.textContent = sel.length ? sel.length + ' selec.' : '';
     }
-    btn.addEventListener('click',function(e){ e.stopPropagation(); var o=panel.classList.contains('open'); closeAll(); if(!o){panel.classList.add('open');btn.classList.add('open');renderList('');si.value='';si.focus();} });
-    si.addEventListener('input',function(){ renderList(si.value); });
-    cl.addEventListener('click',function(){ filterState[id]={}; updateLabel(); renderList(si.value); doSearch(1); });
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var o = panel.classList.contains('open');
+      closeAll();
+      if(!o){ panel.classList.add('open'); btn.classList.add('open'); renderList(''); si.value=''; si.focus(); }
+    });
+    si.addEventListener('input', function(){ renderList(si.value); });
+    cl.addEventListener('click', function(){ filterState[id]={}; updateLabel(); renderList(si.value); doSearch(1); });
   }
 
-  function closeAll(){
+  function closeAll() {
     ['marca','linea','serie','export'].forEach(function(k){
-      var p=document.getElementById('dd-'+k+'-panel'), b=document.getElementById('dd-'+k+'-btn');
-      if(p)p.classList.remove('open'); if(b)b.classList.remove('open');
+      var p = document.getElementById('dd-'+k+'-panel');
+      var b = document.getElementById('dd-'+k+'-btn');
+      if(p) p.classList.remove('open');
+      if(b) b.classList.remove('open');
     });
   }
-  document.addEventListener('click',closeAll);
+  document.addEventListener('click', closeAll);
   ['dd-marca','dd-linea','dd-serie','dd-export'].forEach(function(id){
-    var el=document.getElementById(id); if(el)el.addEventListener('click',function(e){e.stopPropagation();});
+    var el = document.getElementById(id);
+    if(el) el.addEventListener('click', function(e){ e.stopPropagation(); });
   });
 
-  // BUILD HEADER — anchos definidos acá, no en CSS, para control total
-  var W = { margen:14, modelo:130, marca:72, linea:88, serie:72, func:180, price:64, foto:44 };
+  // ─── TABLE ───────────────────────────────────────────────────────────────
+  var FIXED_LEFT  = [
+    { label:'Modelo',    flex:3.5 }, { label:'Marca',    flex:1.2 },
+    { label:'Linea',     flex:1.8 }, { label:'Serie',    flex:1.2 },
+    { label:'Funciones', flex:4   }
+  ];
+  var FIXED_RIGHT = [{ label:'Foto', flex:0.8 }];
+
+  function calcMinWidth(pCols) {
+    var fixedFlex = FIXED_LEFT.reduce(function(a,c){ return a+c.flex; },0) + FIXED_RIGHT[0].flex;
+    var pFlex     = pCols.reduce(function(a,c){ return a+c.flex; }, 0);
+    return Math.ceil((fixedFlex + pFlex) * 100);
+  }
 
   function buildHeader() {
-    var row=document.getElementById('tbl-head-row');
-    row.innerHTML='';
-    function th(label, w) {
-      var el=document.createElement('th');
-      el.textContent=label;
-      el.style.width=w+'px';
-      el.style.minWidth=w+'px';
-      return el;
-    }
-    // Margen izquierdo (vacío, sin borde derecho)
-    var thL=th('', W.margen);
-    thL.style.borderRight='none';
-    row.appendChild(thL);
-
-    row.appendChild(th('Modelo',    W.modelo));
-    row.appendChild(th('Marca',     W.marca));
-    row.appendChild(th('Línea',     W.linea));
-    row.appendChild(th('Serie',     W.serie));
-    row.appendChild(th('Funciones', W.func));
-    visCols().forEach(function(col){ row.appendChild(th(col.label, W.price)); });
-    row.appendChild(th('Foto', W.foto));
-
-    // Margen derecho (vacío, sin borde)
-    var thR=th('', W.margen);
-    thR.style.borderRight='none';
-    thR.style.borderLeft='none';
-    row.appendChild(thR);
+    var head = document.getElementById('tbl-head');
+    head.innerHTML = '';
+    var pCols = getVisiblePriceCols();
+    var minW  = calcMinWidth(pCols);
+    head.style.cssText = 'display:flex;flex-direction:row;align-items:stretch;background:linear-gradient(90deg,#5a0000,#800000);position:sticky;top:0;z-index:10;min-width:'+minW+'px;width:100%;';
+    FIXED_LEFT.concat(pCols).concat(FIXED_RIGHT).forEach(function(col){
+      var d = document.createElement('div');
+      d.style.cssText = 'flex:'+col.flex+';min-width:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:8px 6px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:white;box-sizing:border-box;border-right:1px solid rgba(255,255,255,.1);overflow:hidden;';
+      d.textContent = col.label;
+      head.appendChild(d);
+    });
   }
 
-  // RENDER ROWS
+  function makeCell(content, flex, align) {
+    var d  = document.createElement('div');
+    var jc = align === 'left' ? 'flex-start' : 'center';
+    var pl = align === 'left' ? '14px' : '8px';
+    d.style.cssText = 'flex:'+flex+';min-width:0;display:flex;align-items:center;justify-content:'+jc+';text-align:'+(align==='left'?'left':'center')+';padding:4px '+pl+';font-size:.78rem;box-sizing:border-box;overflow:hidden;border-right:1px solid #f0f0f0;';
+    if(typeof content === 'string') d.innerHTML = content; else d.appendChild(content);
+    return d;
+  }
+
+  function price(val, cls) {
+    var n = parseFloat(val);
+    if(!val || isNaN(n) || n <= 0) return "<span class='price p-zero'>–</span>";
+    return "<span class='price "+cls+"'>$"+n.toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:2})+"</span>";
+  }
+
   function render() {
-    var tbody=document.getElementById('tbl-body');
-    tbody.innerHTML='';
-    if(!currentData.length){
-      var tr=document.createElement('tr'), tc=document.createElement('td');
-      tc.colSpan=99; tc.style.cssText='text-align:center;padding:40px;color:#aaa;font-size:11px;';
-      tc.textContent='No se encontraron productos.'; tr.appendChild(tc); tbody.appendChild(tr); return;
+    var body  = document.getElementById('table-body');
+    body.innerHTML = '';
+    if (!currentData.length) {
+      var msg = document.createElement('div');
+      msg.style.cssText = 'text-align:center;padding:48px;color:#aaa;';
+      msg.textContent = 'No se encontraron productos.';
+      body.appendChild(msg); return;
     }
-    var pCols=visCols();
-    var frag=document.createDocumentFragment();
+    var pCols = getVisiblePriceCols();
+    var minW  = calcMinWidth(pCols);
+    var frag  = document.createDocumentFragment();
 
     currentData.forEach(function(p){
-      var tr=document.createElement('tr');
-
-      function td(w, align) {
-        var el=document.createElement('td');
-        el.style.width=w+'px'; el.style.minWidth=w+'px';
-        el.className=align==='left'?'td-left':'td-center';
-        return el;
-      }
-
-      // Margen izquierdo
-      var tmL=td(W.margen,'center'); tmL.style.borderRight='none'; tr.appendChild(tmL);
+      var row = document.createElement('div');
+      row.className = 'tbl-row';
+      row.style.cssText = 'display:flex;flex-direction:row;align-items:stretch;width:100%;min-width:'+minW+'px;border-bottom:1px solid #e0e0e0;';
 
       // Modelo
-      var t1=td(W.modelo,'left');
-      var s1=document.createElement('span'); s1.className='modelo-txt'; s1.textContent=p.modelo||'–';
-      t1.appendChild(s1); tr.appendChild(t1);
-
-      // Marca / Linea / Serie
-      var t2=td(W.marca,'center'); t2.textContent=p.marca||'–'; tr.appendChild(t2);
-      var t3=td(W.linea,'center'); t3.textContent=p.linea||'–'; tr.appendChild(t3);
-      var t4=td(W.serie,'center'); t4.textContent=p.serie||'–'; tr.appendChild(t4);
+      var spanM = document.createElement('span'); spanM.className = 'modelo-txt'; spanM.textContent = p.modelo||'–';
+      var cellM = document.createElement('div');
+      cellM.style.cssText = 'flex:3.5;min-width:0;display:flex;align-items:center;justify-content:flex-start;padding:4px 14px;box-sizing:border-box;overflow:hidden;border-right:1px solid #f0f0f0;';
+      cellM.appendChild(spanM);
 
       // Funciones
-      var t5=td(W.func,'left');
-      var func=(p.funciones||''); if(func.length>80) func=func.substring(0,80)+'...';
-      var s5=document.createElement('span'); s5.className='func-txt'; s5.textContent=func||'–';
-      t5.appendChild(s5); tr.appendChild(t5);
-
-      // Precios
-      pCols.forEach(function(col){
-        var tc=td(W.price,'center');
-        var n=parseFloat(p[col.field]);
-        if(!p[col.field]||isNaN(n)||n<=0){
-          tc.innerHTML="<span class='p-zero'>–</span>";
-        } else {
-          tc.innerHTML="<span class='price "+col.cls+"'>$"+n.toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:2})+"</span>";
-        }
-        tr.appendChild(tc);
-      });
+      var func = (p.funciones||''); if(func.length>160) func=func.substring(0,160)+'...';
+      var spanF = document.createElement('span'); spanF.className = 'func-txt'; spanF.textContent = func||'–';
+      var cellF = document.createElement('div');
+      cellF.style.cssText = 'flex:4;min-width:0;display:flex;align-items:center;justify-content:flex-start;padding:4px 10px;box-sizing:border-box;overflow:hidden;border-right:1px solid #f0f0f0;';
+      cellF.appendChild(spanF);
 
       // Foto
-      var tf=td(W.foto,'center'); tf.style.padding='3px';
-      if(p.imagen){
-        var wrap=document.createElement('div');
-        wrap.style.cssText='width:34px;height:34px;margin:auto;background:#fff;border:1px solid #eee;border-radius:4px;overflow:hidden;cursor:pointer;';
-        wrap.dataset.foto=p.imagen;
-        wrap.addEventListener('click',function(){ openLB(this); });
-        var img=document.createElement('img'); img.src=p.imagen;
-        img.style.cssText='width:34px;height:34px;object-fit:contain;';
-        img.onerror=function(){this.style.display='none';};
-        wrap.appendChild(img); tf.appendChild(wrap);
-      } else { tf.innerHTML="<span style='color:#ddd;font-size:10px;'>–</span>"; }
-      tr.appendChild(tf);
+      var foto = p.imagen||'';
+      var fotoEl;
+      if(foto) {
+        var wrap = document.createElement('div');
+        wrap.style.cssText = 'width:36px;height:36px;background:#fff;border:1px solid #eee;border-radius:4px;overflow:hidden;cursor:pointer;';
+        wrap.dataset.foto = foto;
+        wrap.addEventListener('click', function(){ openLB(this); });
+        var img = document.createElement('img'); img.src = foto;
+        img.style.cssText = 'width:36px;height:36px;object-fit:contain;';
+        img.onerror = function(){ this.style.display='none'; };
+        wrap.appendChild(img); fotoEl = wrap;
+      } else {
+        fotoEl = document.createElement('span'); fotoEl.style.color='#ddd'; fotoEl.textContent='–';
+      }
+      var cellFoto = document.createElement('div');
+      cellFoto.style.cssText = 'flex:0.8;min-width:0;display:flex;align-items:center;justify-content:center;padding:3px;box-sizing:border-box;overflow:hidden;';
+      cellFoto.appendChild(fotoEl);
 
-      // Margen derecho
-      var tmR=td(W.margen,'center'); tmR.style.borderLeft='none'; tmR.style.borderRight='none'; tr.appendChild(tmR);
-
-      frag.appendChild(tr);
+      row.appendChild(cellM);
+      row.appendChild(makeCell(p.marca||'–', 1.2, 'center'));
+      row.appendChild(makeCell(p.linea||'–', 1.8, 'center'));
+      row.appendChild(makeCell(p.serie||'–', 1.2, 'center'));
+      row.appendChild(cellF);
+      pCols.forEach(function(col){ row.appendChild(makeCell(price(p[col.field], col.cls), col.flex, 'center')); });
+      row.appendChild(cellFoto);
+      frag.appendChild(row);
     });
-    tbody.appendChild(frag);
+    body.appendChild(frag);
   }
 
-  // PAGINATION
+  // ─── PAGINATION ──────────────────────────────────────────────────────────
   function paginate() {
-    var pages=Math.ceil(totalCount/PAGE_SIZE), pag=document.getElementById('pagination');
-    if(pages<=1){pag.innerHTML="<span class='page-info'>"+totalCount+" productos</span>";return;}
-    var h="<button class='page-btn' id='pp'"+(currentPage===1?' disabled':'')+">Anterior</button>";
-    for(var i=1;i<=pages;i++){
+    var pages = Math.ceil(totalCount / PAGE_SIZE);
+    var pag   = document.getElementById('pagination');
+    if(pages <= 1) { pag.innerHTML = "<span class='page-info'>"+totalCount+" productos</span>"; return; }
+    var h = "<button class='page-btn' id='pp'"+(currentPage===1?' disabled':'')+">Anterior</button>";
+    for(var i=1;i<=pages;i++) {
       if(i===1||i===pages||Math.abs(i-currentPage)<=2)
-        h+="<button class='page-btn"+(i===currentPage?' active':'')+"' data-p='"+i+"'>"+i+"</button>";
+        h += "<button class='page-btn"+(i===currentPage?' active':'')+"' data-p='"+i+"'>"+i+"</button>";
       else if(Math.abs(i-currentPage)===3)
-        h+="<span class='page-info'>…</span>";
+        h += "<span class='page-info'>…</span>";
     }
-    h+="<button class='page-btn' id='pn'"+(currentPage===pages?' disabled':'')+">Siguiente</button>";
-    h+="<span class='page-info'>Pág "+currentPage+"/"+pages+" · "+totalCount+" productos</span>";
-    pag.innerHTML=h;
-    document.getElementById('pp').onclick=function(){doSearch(currentPage-1);};
-    document.getElementById('pn').onclick=function(){doSearch(currentPage+1);};
-    pag.querySelectorAll('[data-p]').forEach(function(b){ b.onclick=function(){doSearch(+b.dataset.p);}; });
-    document.querySelector('.tbl-wrap').scrollTop=0;
+    h += "<button class='page-btn' id='pn'"+(currentPage===pages?' disabled':'')+">Siguiente</button>";
+    h += "<span class='page-info'>Pág "+currentPage+"/"+pages+" · "+totalCount+" productos</span>";
+    pag.innerHTML = h;
+    document.getElementById('pp').onclick = function(){ doSearch(currentPage-1); };
+    document.getElementById('pn').onclick = function(){ doSearch(currentPage+1); };
+    pag.querySelectorAll('[data-p]').forEach(function(b){ b.onclick = function(){ doSearch(+b.dataset.p); }; });
+    document.querySelector('.tbl-wrap').scrollTop = 0;
   }
 
-  // EXPORT
+  // ─── EXPORT (role-aware) ─────────────────────────────────────────────────
   async function fetchAllFiltered() {
-    var allRows=[],offset=0,limit=1000;
-    while(true){
-      var url=buildQuery(1,limit).replace('&offset=0','&offset='+offset);
-      var res=await fetch(url,{headers:H,cache:'no-store'});
-      var chunk=await res.json();
+    var allRows=[]; var offset=0; var limit=1000;
+    while(true) {
+      var url = buildQuery(1, limit).replace('&offset=0','&offset='+offset);
+      var res = await fetch(url, { headers: H, cache: 'no-store' });
+      var chunk = await res.json();
       if(!Array.isArray(chunk)||chunk.length===0) break;
-      allRows=allRows.concat(chunk);
-      if(chunk.length<limit) break;
-      offset+=limit;
+      allRows = allRows.concat(chunk);
+      if(chunk.length < limit) break;
+      offset += limit;
     }
     return allRows;
   }
-  function toExportRow(p){
-    var row={SAP:p.sap||'',Modelo:p.modelo||'',Marca:p.marca||'',Linea:p.linea||'',Serie:p.serie||'',Funciones:p.funciones||''};
-    visCols().forEach(function(col){row[col.label]=p[col.field]||'';});
+
+  function toExportRow(p) {
+    var row = { SAP: p.sap||'', Modelo: p.modelo||'', Marca: p.marca||'', Linea: p.linea||'', Serie: p.serie||'', Funciones: p.funciones||'' };
+    getVisiblePriceCols().forEach(function(col){ row[col.label + ' USD'] = p[col.field]||''; });
     return row;
   }
-  document.getElementById('btn-export').addEventListener('click',function(e){
+
+  document.getElementById('btn-export').addEventListener('click', function(e){
     e.stopPropagation();
-    var panel=document.getElementById('dd-export-panel');
-    var o=panel.classList.contains('open'); closeAll(); if(!o) panel.classList.add('open');
+    var panel = document.getElementById('dd-export-panel');
+    var o = panel.classList.contains('open'); closeAll(); if(!o) panel.classList.add('open');
   });
-  document.getElementById('exp-excel').addEventListener('click',async function(){
+  document.getElementById('exp-excel').addEventListener('click', async function(){
     showToast('Preparando Excel...','update');
-    var rows=await fetchAllFiltered();
-    var ws=XLSX.utils.json_to_sheet(rows.map(toExportRow));
-    var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Productos'); XLSX.writeFile(wb,'catalogo.xlsx');
+    var rows = await fetchAllFiltered();
+    var ws = XLSX.utils.json_to_sheet(rows.map(toExportRow));
+    var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Productos'); XLSX.writeFile(wb,'catalogo.xlsx');
     closeAll();
   });
-  document.getElementById('exp-csv').addEventListener('click',async function(){
+  document.getElementById('exp-csv').addEventListener('click', async function(){
     showToast('Preparando CSV...','update');
-    var rows=await fetchAllFiltered();
-    var d=rows.map(toExportRow),k=Object.keys(d[0]||{});
-    var csv=k.join(',')+'\n'+d.map(function(r){return k.map(function(key){var v=String(r[key]||'');return v.includes(',')||v.includes('"')?'"'+v.replace(/"/g,'""')+'"':v;}).join(',');}).join('\n');
-    var a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));
-    a.download='catalogo.csv'; a.click();
+    var rows = await fetchAllFiltered();
+    var d = rows.map(toExportRow), k = Object.keys(d[0]||{});
+    var csv = k.join(',') + '\n' + d.map(function(r){ return k.map(function(key){ var v=String(r[key]||''); return v.includes(',')||v.includes('"')?'"'+v.replace(/"/g,'""')+'"':v; }).join(','); }).join('\n');
+    var a = document.createElement('a'); a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'})); a.download='catalogo.csv'; a.click();
     closeAll();
   });
 
-  // LIGHTBOX
-  function openLB(el){ document.getElementById('lightbox-img').src=el.dataset.foto; document.getElementById('lightbox').classList.add('active'); }
-  document.getElementById('lightbox').addEventListener('click',function(){ this.classList.remove('active'); });
-  document.getElementById('lightbox-close').addEventListener('click',function(){ document.getElementById('lightbox').classList.remove('active'); });
+  // ─── LIGHTBOX ────────────────────────────────────────────────────────────
+  function openLB(el) { document.getElementById('lightbox-img').src=el.dataset.foto; document.getElementById('lightbox').classList.add('active'); }
+  document.getElementByI ('lightbox').addEventListener('click', function(){ document.getElementById('lightbox').classList.remove('active'); });
+  document.getElementById('lightbox-close').addEventListener('click', function(){ document.getElementById('lightbox').classList.remove('active'); });
 
-  // REALTIME
+  // ─── REALTIME ────────────────────────────────────────────────────────────
   function initRealtime() {
-    var ws=new WebSocket('wss://mywtmrwjzwpwkctixnzi.supabase.co/realtime/v1/websocket?apikey='+SB_KEY+'&vsn=1.0.0');
-    ws.onopen=function(){
-      ws.send(JSON.stringify({topic:'realtime:public:productos',event:'phx_join',payload:{config:{broadcast:{self:false}}},ref:'1'}));
-      setRt('connected','En vivo');
+    var ws = new WebSocket('wss://mywtmrwjzwpwkctixnzi.supabase.co/realtime/v1/websocket?apikey='+SB_KEY+'&vsn=1.0.0');
+    ws.onopen = function() {
+      ws.send(JSON.stringify({ topic:'realtime:public:productos', event:'phx_join', payload:{ config:{ broadcast:{ self:false } } }, ref:'1' }));
+      setRtStatus('connected','En vivo');
     };
-    ws.onmessage=function(e){
-      var msg; try{msg=JSON.parse(e.data);}catch(err){return;}
-      if(msg.event==='heartbeat'){ws.send(JSON.stringify({topic:'phoenix',event:'heartbeat',payload:{},ref:'hb'}));return;}
-      if(['INSERT','UPDATE','DELETE'].indexOf(msg.event)>=0){
+    ws.onmessage = function(e) {
+      var msg; try { msg = JSON.parse(e.data); } catch(err){ return; }
+      if(msg.event === 'heartbeat') { ws.send(JSON.stringify({ topic:'phoenix', event:'heartbeat', payload:{}, ref:'hb' })); return; }
+      if(msg.event==='INSERT'||msg.event==='UPDATE'||msg.event==='DELETE') {
         doSearch(currentPage);
         showToast(msg.event==='INSERT'?'Producto agregado':msg.event==='UPDATE'?'Catálogo actualizado':'Producto eliminado','update');
       }
     };
-    ws.onerror=function(){ setRt('disconnected','Sin conexión'); };
-    ws.onclose=function(){ setRt('connecting','Reconectando...'); setTimeout(initRealtime,5000); };
+    ws.onerror = function() { setRtStatus('disconnected','Sin conexión'); };
+    ws.onclose = function() { setRtStatus('connecting','Reconectando...'); setTimeout(initRealtime, 5000); };
   }
 
-  // START
+  // ─── START (called after login) ──────────────────────────────────────────
   async function start() {
     try {
-      var results=await Promise.all([fetchPage(1),fetchDropdownValues()]);
-      currentData=results[0].data; totalCount=results[0].total;
+      var [result] = await Promise.all([fetchPage(1), fetchDropdownValues()]);
+      currentData = result.data; totalCount = result.total;
       buildDropdown('marca','Todas las marcas');
       buildDropdown('linea','Todas las lineas');
       buildDropdown('serie','Todas las series');
       render(); paginate();
       document.getElementById('loading-bar').classList.remove('active');
       initRealtime();
-    } catch(err){
-      document.getElementById('loading-msg').textContent='Error: '+err.message;
-      setRt('disconnected','Error');
+    } catch(err) {
+      console.error('ERROR:', err);
+      document.getElementById('loading-msg').textContent = 'Error: ' + err.message;
+      setRtStatus('disconnected','Error');
     }
   }
-
-});
 </script>
+
 </body>
 </html>
