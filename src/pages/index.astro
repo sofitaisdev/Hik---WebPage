@@ -584,13 +584,27 @@
 
   // ── FETCH ─────────────────────────────────────────────────────────────
   async function fetchPage(page) {
-    var url = buildQuery(page);
-    var res = await fetch(url, { headers: { ...H, 'Prefer': 'count=exact' }, cache: 'no-store' });
-    var data = await res.json();
-    var cr   = res.headers.get('content-range');
-    var total = cr ? parseInt(cr.split('/')[1]) : (Array.isArray(data) ? data.length : 0);
-    return { data: Array.isArray(data) ? data : [], total: total };
+  var url = buildQuery(page);
+
+  var res = await fetch(url, {
+    headers: { ...H, 'Prefer': 'count=exact' },
+    cache: 'no-store'
+  });
+
+  // 👇 VALIDACIÓN REAL
+  if (!res.ok) {
+    const text = await res.text(); // a veces no viene JSON
+    console.error("❌ ERROR REAL:", res.status, text);
+    throw new Error("Error API: " + res.status);
   }
+
+  var data = await res.json();
+
+  var cr = res.headers.get('content-range');
+  var total = cr ? parseInt(cr.split('/')[1]) : (Array.isArray(data) ? data.length : 0);
+
+  return { data: Array.isArray(data) ? data : [], total: total };
+}
 
   async function fetchDropdownValues() {
     try {
