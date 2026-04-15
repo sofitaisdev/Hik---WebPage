@@ -572,12 +572,16 @@
     else if (se.length > 1) url += '&serie=in.(' + se.map(encodeURIComponent).join(',') + ')';
 
     if (q) {
-      url += '&or=(modelo.ilike.*' + encodeURIComponent(q) + '*' +
-             ',funciones.ilike.*'  + encodeURIComponent(q) + '*' +
-             ',marca.ilike.*'      + encodeURIComponent(q) + '*' +
-             ',linea.ilike.*'      + encodeURIComponent(q) + '*' +
-             ',serie.ilike.*'      + encodeURIComponent(q) + '*)';
-    }
+  // Las comillas dobles dentro del or() le dicen a PostgREST que el valor
+  // es literal — así los paréntesis, puntos y otros chars especiales no
+  // rompen la sintaxis del filtro.
+  var pattern = encodeURIComponent('"*' + q + '*"');
+  url += '&or=(modelo.ilike.'   + pattern +
+         ',funciones.ilike.'    + pattern +
+         ',marca.ilike.'        + pattern +
+         ',linea.ilike.'        + pattern +
+         ',serie.ilike.'        + pattern + ')';
+}
     url += '&order=actualizado_en.desc&limit=' + lim + '&offset=' + off;
     return url;
   }
