@@ -264,24 +264,16 @@
   var sbClient = null;
 
   /* ═══════════════════════════════════════════════════
-     COLUMNAS — orden exacto del CSV con Foto al inicio
-     Roles: diamond | black | platino | ruby | gold | guest
+     COLUMNAS
   ═══════════════════════════════════════════════════ */
   var ALL_COLUMNS = [
-    // ── Foto (primer lugar)
     { label:'Foto',                                         field:'imagen',              flex:0.7,  image:true,  always:true },
-
-    // ── Identificación del producto (del CSV, en orden)
     { label:'SKU BASE',                                     field:'sku_base',            flex:1.2,  always:true },
     { label:'SKU (Código de Producto)',                     field:'sku_codigo',          flex:1.5,  always:true },
     { label:'SAP',                                          field:'sap',                 flex:0.9,  always:true },
     { label:'MARCA',                                        field:'marca',               flex:1.0,  always:true },
-
-    // ── Descripción (campos extra de Supabase, no en CSV pero útiles)
     { label:'Modelo',                                       field:'modelo',              flex:2.2,  always:true, alignLeft:true },
     { label:'Funciones',                                    field:'funciones',           flex:3.5,  always:true, alignLeft:true },
-
-    // ── Clasificación (del CSV, en orden)
     { label:'Sales Status',                                 field:'sales_status',        flex:1.1,  always:true },
     { label:'Reemplazo Sugerido',                           field:'reemplazo_sug',       flex:1.2,  always:true },
     { label:'Market Segment',                               field:'market_segment',      flex:1.2,  always:true },
@@ -292,24 +284,16 @@
     { label:'4-Line-Focus',                                 field:'line_focus',          flex:1.1,  always:true },
     { label:'5-Selection',                                  field:'selection',           flex:1.0,  always:true },
     { label:'Sistema de Precios',                           field:'sistema_precios',     flex:1.2,  always:true },
-
-    // ── Precios USD (restringidos por rol) — orden exacto del CSV
     { label:'HDN Diamond & Titanium (USD)',                 field:'diamond_usd',         flex:1.2,  price:true, cls:'p-diamond', roles:['diamond','black','platino','ruby','gold'] },
     { label:'HDN&HSP Platinum (USD)',                       field:'platinum_usd',        flex:1.1,  price:true, cls:'p-plat',    roles:['diamond','black','platino','ruby','gold'] },
     { label:'HSP&HSI Ruby (USD)',                           field:'ruby_usd',            flex:1.1,  price:true, cls:'p-ruby',    roles:['diamond','black','platino','ruby','gold'] },
     { label:'GOLD (Gremio)',                                field:'gold_gremio_usd',     flex:1.0,  price:true, cls:'p-gold',    roles:['diamond','black','platino','ruby','gold'] },
     { label:'GOLD PLUS (Compras +USD1500)',                 field:'gold_plus_usd',       flex:1.2,  price:true, cls:'p-goldplus',roles:['diamond','black','platino','ruby','gold'] },
     { label:'GOLD PRIME (Compras +USD2500)',                field:'gold_prime_usd',      flex:1.2,  price:true, cls:'p-goldplus',roles:['diamond','black','platino','ruby','gold'] },
-
-    // ── Impuestos (del CSV)
     { label:'IVA',                                          field:'iva',                 flex:0.65, always:true },
     { label:'IITT',                                         field:'iitt',                flex:0.65, always:true },
-
-    // ── Precios MAP ARS — todos los roles incluyendo guest
     { label:'MAP Web Propia ARS c/IVA',                     field:'map_web_ars',         flex:1.3,  price:true, cls:'p-map', roles:['diamond','black','platino','ruby','gold','guest'] },
     { label:'MAP ML Regular ARS c/IVA',                     field:'map_ars',             flex:1.3,  price:true, cls:'p-map', roles:['diamond','black','platino','ruby','gold','guest'] },
-
-    // ── Cuotas y promos (del CSV, en orden)
     { label:'Cuotas S/Recargo PERMITIDAS',                  field:'cuotas_sin_recargo',  flex:1.1,  always:true },
     { label:'% PROMO ML 1 CUOTA',                           field:'promo_ml_1cuota',     flex:0.9,  always:true },
     { label:'% PROMO ML 3 CUOTAS',                          field:'promo_ml_3cuotas',    flex:0.9,  always:true },
@@ -317,8 +301,6 @@
     { label:'% PROMO ML 9 CUOTAS',                          field:'promo_ml_9cuotas',    flex:0.9,  always:true },
     { label:'% PROMO ML 12 CUOTAS',                         field:'promo_ml_12cuotas',   flex:0.9,  always:true },
     { label:'% PROMO ML CUOTA REDUCIDA',                    field:'promo_ml_cuotared',   flex:1.0,  always:true },
-
-    // ── Precios MAP promo ARS — todos los roles (del CSV, en orden)
     { label:'MAP ML PROMO 1 Cuota ARS c/IVA',               field:'map_promo_1cuota',    flex:1.3,  price:true, cls:'p-map', roles:['diamond','black','platino','ruby','gold','guest'] },
     { label:'MAP ML PROMO 3 Cuotas ARS c/IVA',              field:'map_promo_3cuotas',   flex:1.3,  price:true, cls:'p-map', roles:['diamond','black','platino','ruby','gold','guest'] },
     { label:'MAP ML PROMO 6 Cuotas ARS c/IVA',              field:'map_promo_6cuotas',   flex:1.3,  price:true, cls:'p-map', roles:['diamond','black','platino','ruby','gold','guest'] },
@@ -327,7 +309,6 @@
     { label:'MAP ML PROMO Cuota Reducida ARS c/IVA',        field:'map_promo_cuotared',  flex:1.4,  price:true, cls:'p-map', roles:['diamond','black','platino','ruby','gold','guest'] }
   ];
 
-  /* Determina columnas visibles según rol */
   function getVisibleColumns() {
     return ALL_COLUMNS.filter(function(c) {
       if (c.always || c.image) return true;
@@ -417,8 +398,7 @@
   }
 
   /* ═══════════════════════════════════════════════════
-     TODOS LOS CAMPOS DEL CATÁLOGO (para calcular completitud)
-     Excluye imagen y campos de solo categoría (siempre vacíos no cuentan)
+     SCORE
   ═══════════════════════════════════════════════════ */
   var SCORE_FIELDS = [
     'sku_base','sku_codigo','sap','marca','modelo','funciones',
@@ -444,28 +424,58 @@
   }
 
   /* ═══════════════════════════════════════════════════
-     DATASET GLOBAL — se carga UNA SOLA VEZ al inicio
+     DATASET GLOBAL — carga TODOS los productos paginando
+     de a 1000 hasta agotar los registros
   ═══════════════════════════════════════════════════ */
-  var allData = [];   // todos los productos ordenados por completitud
+  var allData = [];
 
   async function fetchAllProducts() {
     var msgEl = document.getElementById('loading-msg');
-    if (msgEl) msgEl.textContent = 'Cargando catálogo completo...';
-    // Una sola request con límite alto — Supabase devuelve hasta 10.000 filas
-    var url = SB_URL + '/rest/v1/productos?select=*&list_mark=eq.true&limit=10000&offset=0';
-    var res = await fetch(url, { headers: { ...H, 'Prefer': 'count=exact' }, cache: 'no-store' });
-    if (!res.ok) {
-      var errBody = '';
-      try { errBody = await res.text(); } catch(e2) {}
-      console.error('Supabase error', res.status, errBody);
-      throw new Error('Error API ' + res.status + (errBody ? ': ' + errBody.substring(0, 200) : ''));
+    var all = [];
+    var batchSize = 1000;
+    var offset = 0;
+    var page = 1;
+
+    while (true) {
+      if (msgEl) msgEl.textContent = 'Cargando catálogo... ' + all.length + ' productos';
+
+      var url = SB_URL + '/rest/v1/productos'
+              + '?select=*'
+              + '&list_mark=eq.true'
+              + '&limit=' + batchSize
+              + '&offset=' + offset
+              + '&order=sap.asc';
+
+      var res = await fetch(url, {
+        headers: H,
+        cache: 'no-store'
+      });
+
+      if (!res.ok) {
+        var errBody = '';
+        try { errBody = await res.text(); } catch(e2) {}
+        console.error('Supabase error', res.status, errBody);
+        throw new Error('Error API ' + res.status + (errBody ? ': ' + errBody.substring(0, 200) : ''));
+      }
+
+      var rows = await res.json();
+      if (!Array.isArray(rows) || rows.length === 0) break;
+
+      all = all.concat(rows);
+      if (msgEl) msgEl.textContent = 'Cargando catálogo... ' + all.length + ' productos';
+
+      // Si trajo menos que el batch, es la última página
+      if (rows.length < batchSize) break;
+
+      offset += batchSize;
+      page++;
     }
-    var rows = await res.json();
-    if (!Array.isArray(rows)) rows = [];
-    // Calcular puntaje y ordenar: más columnas completas primero
-    rows.forEach(function(p) { p._score = completenessScore(p); });
-    rows.sort(function(a, b) { return b._score - a._score; });
-    return rows;
+
+    // Ordenar por completitud: los más completos primero
+    all.forEach(function(p) { p._score = completenessScore(p); });
+    all.sort(function(a, b) { return b._score - a._score; });
+
+    return all;
   }
 
   /* ═══════════════════════════════════════════════════
@@ -629,19 +639,18 @@
       row.style.cssText = 'display:flex;width:100%;min-width:' + minW + 'px;border-bottom:1px solid #e8e8e8;';
 
       cols.forEach(function(col) {
+        // Intentar imagen desde 'imagen' o 'foto_url'
         var val = p[col.field];
+        if (col.field === 'imagen' && !val) val = p['foto_url'];
 
-        // Foto
         if (col.image) { row.appendChild(makeImageCell(val, col.flex)); return; }
 
-        // Precio
         if (col.price) {
           var html = (val === undefined || val === null || val === '') ? "<span class='price p-zero'>–</span>" : formatPrice(val, col.cls);
           row.appendChild(makeCell(html, col.flex, false));
           return;
         }
 
-        // Texto normal
         var txt = (val === undefined || val === null) ? '–' : String(val);
         if (txt === '') txt = '–';
         if (txt.length > 140) txt = txt.substring(0, 140) + '…';
@@ -676,7 +685,7 @@
   }
 
   /* ═══════════════════════════════════════════════════
-     EXPORT — usa los datos ya filtrados en memoria
+     EXPORT
   ═══════════════════════════════════════════════════ */
   document.getElementById('btn-export').addEventListener('click', function(e) {
     e.stopPropagation();
@@ -686,7 +695,7 @@
 
   document.getElementById('exp-excel').addEventListener('click', async function() {
     showToast('Preparando Excel...', 'update');
-    var rows = applyFilters();   // exporta lo que está filtrado, en orden de completitud
+    var rows = applyFilters();
     var cols = getVisibleColumns().filter(c => !c.image);
     var data = rows.map(function(p) {
       var obj = {};
@@ -732,22 +741,24 @@
   document.getElementById('lightbox-close').addEventListener('click', function(e) { e.stopPropagation(); document.getElementById('lightbox').classList.remove('active'); });
 
   /* ═══════════════════════════════════════════════════
-     START — carga TODO el catálogo una sola vez
+     START
   ═══════════════════════════════════════════════════ */
   async function start() {
     try {
       allData = await fetchAllProducts();
 
-      // Extraer valores para dropdowns desde los datos cargados
       buildDropdownValues();
       buildDropdown('marca', 'Todas las marcas');
       buildDropdown('linea', 'Todas las líneas');
       buildDropdown('serie', 'Todas las series');
 
-      // Mostrar primera página
       doSearch(1);
 
-      document.getElementById('loading-bar').classList.remove('active');
+      document.getElementById('loading-msg').textContent = '✓ ' + allData.length + ' productos cargados';
+      setTimeout(function() {
+        document.getElementById('loading-bar').classList.remove('active');
+      }, 2000);
+
       document.getElementById('rt-badge').className = 'rt-badge connected';
       document.getElementById('rt-label').textContent = 'Conectado';
     } catch(err) {
