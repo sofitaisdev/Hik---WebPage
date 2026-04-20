@@ -208,7 +208,7 @@ var filterState={marca:{},linea:{},serie:{}},dropdownValues={marca:[],linea:[],s
 var debounceTimer=null,currentRole='guest',sbClient=null;
 
 var ALL_COLUMNS=[
-  {label:'Foto',field:'imagen',flex:0.7,image:true,always:true},
+  {label:'Foto',field:'foto',flex:0.7,image:true,always:true},
   {label:'Modelo',field:'sku_codigo',flex:1.5,always:true},
   {label:'SAP',field:'sap',flex:0.9,always:true},
   {label:'MARCA',field:'marca',flex:1.0,always:true},
@@ -662,7 +662,7 @@ async function start(){
     buildDropdown('serie','Todas las series');
     doSearch(1);
     document.getElementById('loading-bar').classList.remove('active');
-    var conFoto=allData.filter(function(p){return p.imagen&&String(p.imagen).startsWith('http');}).length;
+    var conFoto=allData.filter(function(p){return p.foto&&String(p.foto).startsWith('http');}).length;
     var conFunc=allData.filter(function(p){return p.funciones&&String(p.funciones).trim()!=='';}).length;
     document.getElementById('rt-badge').className='rt-badge connected';
     document.getElementById('rt-label').textContent=allData.length+' productos · '+conFoto+' con foto · '+conFunc+' con funciones';
