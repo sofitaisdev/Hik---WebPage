@@ -202,6 +202,7 @@
 <script>
 /* CONFIG */
 var SB_URL  = 'https://mywtmrwjzwpwkctixnzi.supabase.co';
+var PRICEBOOK_URL = ''; /* URL pública del pricebook.xlsx — completar antes de usar */
 var SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im15d3Rtcndqendwd2tjdGl4bnppIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NTQ4NDYsImV4cCI6MjA4NzUzMDg0Nn0.jdA2J-YUuRqnqj5-4l7yxGn_VoOX6C5Jwvn7k4l_ZgA';
 var H       = { apikey:SB_KEY, Authorization:'Bearer '+SB_KEY, 'Content-Type':'application/json' };
 var SB_PAGE = 1000; /* max por request con anon key */
@@ -212,11 +213,9 @@ var debounceTimer=null, currentRole='guest', sbClient=null;
 /* COLUMNAS */
 var ALL_COLUMNS=[
   {label:'Foto',field:'imagen',flex:0.7,image:true,always:true},
-  {label:'SKU BASE',field:'sku_base',flex:1.2,always:true},
-  {label:'SKU Código',field:'sku_codigo',flex:1.5,always:true},
+  {label:'Modelo',field:'sku_codigo',flex:1.5,always:true},
   {label:'SAP',field:'sap',flex:0.9,always:true},
   {label:'MARCA',field:'marca',flex:1.0,always:true},
-  {label:'Modelo',field:'modelo',flex:2.2,always:true,alignLeft:true},
   {label:'Funciones',field:'funciones',flex:3.5,always:true,alignLeft:true},
   {label:'Sales Status',field:'sales_status',flex:1.1,always:true},
   {label:'Reemplazo Sugerido',field:'reemplazo_sug',flex:1.2,always:true},
@@ -322,6 +321,33 @@ function showToast(msg,type){
 /* SCORE */
 var SF=['sku_base','sku_codigo','sap','marca','modelo','funciones','sales_status','reemplazo_sug','market_segment','cate_target','cat_madre','cat_line','line_offer','line_focus','selection','sistema_precios','diamond_usd','platinum_usd','ruby_usd','gold_gremio_usd','gold_plus_usd','gold_prime_usd','iva','iitt','map_web_ars','map_ars','cuotas_sin_recargo','promo_ml_1cuota','promo_ml_3cuotas','promo_ml_6cuotas','promo_ml_9cuotas','promo_ml_12cuotas','promo_ml_cuotared','map_promo_1cuota','map_promo_3cuotas','map_promo_6cuotas','map_promo_9cuotas','map_promo_12cuotas','map_promo_cuotared','imagen','linea','serie'];
 function completenessScore(p){var s=0;SF.forEach(function(f){var v=p[f];if(v!==null&&v!==undefined&&String(v).trim()!=='')s++;});return s;}
+
+/* ==============================================
+   PRICEBOOK — carga Functional Description por SAP
+   ============================================== */
+async function fetchPricebook(){
+  if(!PRICEBOOK_URL) return {};
+  try{
+    var res=await fetch(PRICEBOOK_URL,{cache:'no-store'});
+    if(!res.ok) return {};
+    var buf=await res.arrayBuffer();
+    var wb=XLSX.read(buf,{type:'array'});
+    var ws=wb.Sheets[wb.SheetNames[0]];
+    var rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    /* Buscar índices de columnas SAP Code y Functional Description */
+    var header=rows[0].map(function(h){return String(h).trim().toLowerCase();});
+    var sapIdx=header.indexOf('sap code');
+    var funcIdx=header.indexOf('functional description');
+    if(sapIdx===-1||funcIdx===-1) return {};
+    var map={};
+    for(var i=1;i<rows.length;i++){
+      var sap=String(rows[i][sapIdx]).trim();
+      var func=String(rows[i][funcIdx]).trim();
+      if(sap&&func&&func!=='undefined') map[sap]=func;
+    }
+    return map;
+  }catch(e){ console.warn('Pricebook fetch error:',e); return {}; }
+}
 
 /* ==============================================
    FETCH ALL — PAGINADO
@@ -513,7 +539,17 @@ document.getElementById('lightbox-close').addEventListener('click',function(e){e
 /* START */
 async function start(){
   try{
-    allData=await fetchAllProducts();
+    var [products, pbMap] = await Promise.all([fetchAllProducts(), fetchPricebook()]);
+    allData = products;
+    /* Enriquecer funciones con Functional Description del pricebook */
+    if(Object.keys(pbMap).length){
+      allData.forEach(function(p){
+        if(!p.funciones || String(p.funciones).trim()===''){
+          var sap=String(p.sap||'').trim();
+          if(sap && pbMap[sap]) p.funciones=pbMap[sap];
+        }
+      });
+    }
     buildDropdownValues();
     buildDropdown('marca','Todas las marcas');
     buildDropdown('linea','Todas las lineas');
