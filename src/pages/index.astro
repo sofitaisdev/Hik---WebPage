@@ -358,7 +358,7 @@ async function fetchAllProducts(){
   while(true){
     if(msgEl)msgEl.textContent='Cargando... página '+page+' ('+all.length+' productos)';
     var from=offset,to=offset+SB_PAGE-1;
-    var res=await fetch(SB_URL+'/rest/v1/productos?select=*&order=id.asc',
+    var res=await fetch(SB_URL+'/rest/v1/productos?select=*',
       {headers:Object.assign({},H,{'Range-Unit':'items','Range':from+'-'+to,'Prefer':'count=exact'}),cache:'no-store'});
     if(!res.ok){
       var eb='';
