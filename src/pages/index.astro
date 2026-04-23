@@ -135,8 +135,13 @@
 
     /* Price cells */
     .price{font-weight:700!important;font-size:.82rem;text-align:center}
-    .p-diamond{color:#2b7fd4}.p-plat{color:#7070a0}.p-ruby{color:#be123c}
-    .p-gold{color:#b8860b}.p-goldplus{color:#c07000}.p-map{color:#065f46}
+    .p-diamond{color:#2563eb}
+    .p-plat{color:#7c3aed}
+    .p-ruby{color:#e11d48}
+    .p-gold{color:#d97706}
+    .p-goldplus{color:#b45309}
+    .p-goldprime{color:#92400e}
+    .p-map{color:#059669}
     .p-zero{color:#ccc;font-weight:400!important}
 
     /* Pagination */
@@ -161,6 +166,18 @@
     /* ===== SUMMARY VIEW BADGE ===== */
     .view-badge{display:none;align-items:center;gap:6px;padding:3px 32px;background:#fffbec;border-bottom:1px solid #fcd34d;font-size:.78rem;color:#92400e;font-weight:500;flex-shrink:0}
     .view-badge.active{display:flex}
+
+    /* ===== EXPORT MODAL ===== */
+    .exp-section{margin-bottom:18px}
+    .exp-section-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#888;margin-bottom:10px}
+    .exp-radio-group{display:flex;gap:8px}
+    .exp-radio{cursor:pointer}
+    .exp-radio input{display:none}
+    .exp-radio-box{display:block;padding:9px 16px;border:1.5px solid var(--border);border-radius:7px;font-size:.82rem;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+    .exp-radio input:checked + .exp-radio-box{border-color:var(--burg);background:#fff0f0;color:var(--burg);font-weight:700}
+    .exp-radio-box:hover{border-color:#aaa}
+    .exp-radio-v{display:flex;align-items:center;gap:8px;font-size:.84rem;cursor:pointer;padding:4px 0}
+    .exp-radio-v input{accent-color:var(--burg);width:15px;height:15px}
 
     /* ===== ADMIN IMPORT MODAL ===== */
     .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center;padding:16px}
@@ -403,17 +420,10 @@
       <!-- Spacer -->
       <div style="flex:1"></div>
 
-      <!-- Export -->
-      <div class="cb-dropdown" id="dd-export" style="flex:0 0 auto;">
-        <button class="btn-green" id="btn-export">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
-          Exportar
-        </button>
-        <div class="cb-dropdown-panel" id="dd-export-panel">
-          <div class="cb-panel-item" id="exp-excel">Excel (.xlsx)</div>
-          <div class="cb-panel-item" id="exp-csv">CSV (.csv)</div>
-        </div>
-      </div>
+      <button class="btn-green" id="btn-export">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        Exportar
+      </button>
 
     </div>
   </div>
@@ -430,6 +440,10 @@
       <div class="spinner"></div>
       <span id="loading-msg">Cargando catálogo...</span>
     </div>
+    <span id="loading-more-badge" style="display:none;align-items:center;gap:6px;font-size:.78rem;color:#a07010;font-weight:500;">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation:spin .9s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+      <span id="loading-more-text"></span>
+    </span>
   </div>
 
   <main>
@@ -443,6 +457,60 @@
   </main>
 
   <!-- Lightbox -->
+  <!-- ===== EXPORT MODAL ===== -->
+  <div class="modal-overlay" id="export-modal">
+    <div class="modal-box" style="width:480px;border-top-color:var(--burg);">
+      <div class="modal-header">
+        <h2 style="color:var(--burg);">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+          Exportar catálogo
+        </h2>
+        <button class="modal-close" id="exp-modal-close">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:20px 24px;">
+
+        <!-- FORMAT -->
+        <div class="exp-section">
+          <div class="exp-section-title">Formato</div>
+          <div class="exp-radio-group">
+            <label class="exp-radio"><input type="radio" name="exp-fmt" value="xlsx" checked/><span class="exp-radio-box">📊 Excel (.xlsx)</span></label>
+            <label class="exp-radio"><input type="radio" name="exp-fmt" value="csv"/><span class="exp-radio-box">📄 CSV (.csv)</span></label>
+            <label class="exp-radio"><input type="radio" name="exp-fmt" value="pdf"/><span class="exp-radio-box">📑 PDF <small style="font-weight:400;opacity:.7">(máx 500)</small></span></label>
+          </div>
+        </div>
+
+        <!-- COLUMNS -->
+        <div class="exp-section">
+          <div class="exp-section-title">Columnas a incluir</div>
+          <div class="exp-radio-group" style="flex-direction:column;gap:6px;">
+            <label class="exp-radio-v"><input type="radio" name="exp-cols" value="visible" checked/> Columnas visibles en pantalla</label>
+            <label class="exp-radio-v"><input type="radio" name="exp-cols" value="base"/> Solo columnas base (sin precios)</label>
+            <label class="exp-radio-v"><input type="radio" name="exp-cols" value="ml"/> Solo Mercado Libre (MAP + promos)</label>
+            <label class="exp-radio-v"><input type="radio" name="exp-cols" value="propio"/> Solo precios Propio</label>
+            <label class="exp-radio-v"><input type="radio" name="exp-cols" value="canal"/> Solo precios Canal</label>
+            <label class="exp-radio-v"><input type="radio" name="exp-cols" value="all_prices"/> Todo (base + todos los precios)</label>
+          </div>
+        </div>
+
+        <!-- ROWS -->
+        <div class="exp-section">
+          <div class="exp-section-title">Productos</div>
+          <div class="exp-radio-group" style="flex-direction:column;gap:6px;">
+            <label class="exp-radio-v"><input type="radio" name="exp-rows" value="filtered" checked/> <span>Productos filtrados actualmente — <strong id="exp-filtered-count">0</strong></span></label>
+            <label class="exp-radio-v"><input type="radio" name="exp-rows" value="all"/> <span>Todos los productos — <strong id="exp-all-count">0</strong></span></label>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" id="exp-modal-cancel">Cancelar</button>
+        <button class="btn-primary" id="exp-modal-run" style="background:var(--burg);">
+          <span id="exp-modal-btn-label">Exportar</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="lightbox" id="lightbox">
     <span class="lightbox-close" id="lightbox-close">&times;</span>
     <img id="lightbox-img" src="" alt="" />
@@ -484,7 +552,7 @@ var ALL_COLUMNS = [
   {label:'Modelo',        field:'sku_codigo',         w:132},
   {label:'SAP',           field:'sap',                w:95},
   {label:'MARCA',         field:'marca',              w:100},
-  {label:'Funciones',     field:'funciones',          w:290, alignLeft:true, funciones:true},
+  {label:'Funciones',     field:'funciones',          w:290, grow:true, alignLeft:true, funciones:true},
   {label:'Sales Status',  field:'sales_status',       w:105},
   {label:'Reemplazo',     field:'reemplazo_sug',      w:115},
   {label:'Market Seg.',   field:'market_segment',     w:115},
@@ -511,7 +579,7 @@ var ALL_COLUMNS = [
   {label:'Ruby USD',          field:'ruby_usd',           w:105, price:true, cls:'p-ruby',    group:'propio'},
   {label:'Gold Gremio USD',   field:'gold_gremio_usd',    w:112, price:true, cls:'p-gold',    group:'propio'},
   {label:'Gold Plus USD',     field:'gold_plus_usd',      w:108, price:true, cls:'p-goldplus',group:'propio'},
-  {label:'Gold Prime USD',    field:'gold_prime_usd',     w:110, price:true, cls:'p-goldplus',group:'propio'},
+  {label:'Gold Prime USD',    field:'gold_prime_usd',     w:110, price:true, cls:'p-goldprime',group:'propio'},
   {label:'MAP Web ARS',       field:'map_web_ars',        w:128, price:true, cls:'p-map',     group:'ml'},
   {label:'MAP ML ARS',        field:'map_ars',            w:122, price:true, cls:'p-map',     group:'ml'},
   {label:'MAP Promo 1C',      field:'map_promo_1cuota',   w:118, price:true, cls:'p-map',     group:'ml'},
@@ -549,24 +617,32 @@ var CANAL_BY_ROLE = {
    getVisibleColumns — respects currentView + priceToggle + role
 ================================================================ */
 function getVisibleColumns() {
-  var base;
-  if (currentView === 'summary') {
-    base = ALL_COLUMNS.filter(function(c) {
-      return !c.price && SUMMARY_FIELDS.indexOf(c.field) !== -1;
+  /* ── VISTA COMPLETA: muestra todo sin necesidad de toggles ── */
+  if (currentView === 'full') {
+    var base = ALL_COLUMNS.filter(function(c) { return !c.price; });
+    var priceCols = ALL_COLUMNS.filter(function(c) {
+      if (!c.price) return false;
+      if (currentRole === 'guest') return c.group === 'ml';
+      return true; // logged-in users see all price columns
     });
-  } else {
-    base = ALL_COLUMNS.filter(function(c) { return !c.price; });
+    return base.concat(priceCols);
   }
+
+  /* ── VISTA RESUMIDA: solo campos base seleccionados ── */
+  var base = ALL_COLUMNS.filter(function(c) {
+    return !c.price && SUMMARY_FIELDS.indexOf(c.field) !== -1;
+  });
 
   var priceFields = [];
-
   if (priceToggle.propio) {
-    var own = PROPIO_BY_ROLE[currentRole] || [];
-    own.forEach(function(f) { if (priceFields.indexOf(f) === -1) priceFields.push(f); });
+    (PROPIO_BY_ROLE[currentRole] || []).forEach(function(f) {
+      if (priceFields.indexOf(f) === -1) priceFields.push(f);
+    });
   }
   if (priceToggle.canal) {
-    var ch = CANAL_BY_ROLE[currentRole] || [];
-    ch.forEach(function(f) { if (priceFields.indexOf(f) === -1) priceFields.push(f); });
+    (CANAL_BY_ROLE[currentRole] || []).forEach(function(f) {
+      if (priceFields.indexOf(f) === -1) priceFields.push(f);
+    });
   }
   if (priceToggle.ml) {
     ALL_COLUMNS.forEach(function(c) {
@@ -574,7 +650,6 @@ function getVisibleColumns() {
     });
   }
 
-  /* Append price columns in their original order */
   ALL_COLUMNS.forEach(function(c) {
     if (c.price && priceFields.indexOf(c.field) !== -1) base.push(c);
   });
@@ -688,31 +763,102 @@ async function fetchPricebook() {
   } catch(e) { return {}; }
 }
 
-async function fetchAllProducts() {
-  var msgEl = document.getElementById('loading-msg'); var all = [], offset = 0, page = 1;
-  while (true) {
-    if (msgEl) msgEl.textContent = 'Cargando... página ' + page + ' (' + all.length + ' productos)';
-    var from = offset, to = offset + SB_PAGE - 1; var authTok = sessionToken || SB_KEY;
-    var res = await fetch(SB_URL + '/rest/v1/productos?select=*', {
-      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + authTok, 'Content-Type': 'application/json',
-        'Range-Unit': 'items', 'Range': from + '-' + to, 'Prefer': 'count=exact' }, cache: 'no-store' });
-    if (!res.ok) { var eb = ''; try { eb = await res.text(); } catch(e) {} throw new Error('API ' + res.status + (eb ? ': ' + eb.substring(0,200) : '')); }
-    var rows = await res.json(); if (!Array.isArray(rows)) rows = [];
-    var cr = res.headers.get('content-range') || ''; var tm = cr.match(/\/(\d+)$/); var serverTotal = tm ? parseInt(tm[1], 10) : null;
-    all = all.concat(rows);
-    if (msgEl && serverTotal) msgEl.textContent = 'Cargando... ' + all.length + ' / ' + serverTotal + ' productos';
-    if (rows.length < SB_PAGE) break; if (serverTotal !== null && all.length >= serverTotal) break;
-    offset += SB_PAGE; page++;
-    await new Promise(function(r) { setTimeout(r, 50); });
-  }
-  all.forEach(function(p) { p._score = completenessScore(p); });
-  all.sort(function(a, b) { return b._score - a._score; });
-  return all;
+async function fetchPage(offset) {
+  var from = offset, to = offset + SB_PAGE - 1;
+  var authTok = sessionToken || SB_KEY;
+  var res = await fetch(SB_URL + '/rest/v1/productos?select=*', {
+    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + authTok, 'Content-Type': 'application/json',
+      'Range-Unit': 'items', 'Range': from + '-' + to, 'Prefer': 'count=exact' }, cache: 'no-store' });
+  if (!res.ok) { var eb = ''; try { eb = await res.text(); } catch(e) {} throw new Error('API ' + res.status + (eb ? ': ' + eb.substring(0,200) : '')); }
+  var rows = await res.json(); if (!Array.isArray(rows)) rows = [];
+  var cr = res.headers.get('content-range') || ''; var tm = cr.match(/\/(\d+)$/);
+  var serverTotal = tm ? parseInt(tm[1], 10) : null;
+  return { rows: rows, total: serverTotal };
+}
+
+function applyPricebook(pbMap, arr) {
+  if (!Object.keys(pbMap).length) return;
+  arr.forEach(function(p) {
+    if (!p.funciones || String(p.funciones).trim() === '') {
+      var sap = String(p.sap || '').trim(); if (sap && pbMap[sap]) p.funciones = pbMap[sap];
+    }
+  });
+}
+
+function scoreAndSort(arr) {
+  arr.forEach(function(p) { p._score = completenessScore(p); });
+  arr.sort(function(a, b) { return b._score - a._score; });
+}
+
+function setMoreBadge(msg) {
+  var el  = document.getElementById('loading-more-badge');
+  var txt = document.getElementById('loading-more-text') || el;
+  if (!el) return;
+  if (msg) { if (txt) txt.textContent = msg; el.style.display = 'inline-flex'; }
+  else { el.style.display = 'none'; }
 }
 
 /* ================================================================
-   FILTERS
+   START — show first batch instantly, load rest in background
 ================================================================ */
+async function start() {
+  try {
+    /* Kick off pricebook fetch in parallel */
+    var pbPromise = fetchPricebook();
+
+    /* Fetch first page */
+    var first = await fetchPage(0);
+    var pbMap  = await pbPromise;
+
+    applyPricebook(pbMap, first.rows);
+    scoreAndSort(first.rows);
+    allData = first.rows;
+
+    buildDropdownValues();
+    FILTER_KEYS.forEach(function(k) { buildDropdown(k, DROPDOWN_LABELS[k]); });
+    doSearch(1);
+
+    /* Hide main loading bar, mark connected */
+    document.getElementById('loading-bar').classList.remove('active');
+    document.getElementById('rt-badge').className  = 'rt-badge connected';
+    document.getElementById('rt-label').textContent = 'Conectado';
+
+    /* If there are more pages, load them silently */
+    var serverTotal = first.total;
+    if (serverTotal && allData.length < serverTotal) {
+      var remaining = serverTotal - allData.length;
+      setMoreBadge('Cargando ' + remaining + ' productos más...');
+
+      (async function loadRest() {
+        var offset = SB_PAGE;
+        while (offset < serverTotal) {
+          try {
+            var page = await fetchPage(offset);
+            applyPricebook(pbMap, page.rows);
+            page.rows.forEach(function(p) { p._score = completenessScore(p); });
+            allData = allData.concat(page.rows);
+            offset += SB_PAGE;
+            var left = serverTotal - allData.length;
+            if (left > 0) setMoreBadge('Cargando ' + left + ' productos más...');
+            await new Promise(function(r) { setTimeout(r, 60); });
+          } catch(e) { break; }
+        }
+        /* Final sort + refresh dropdowns + silent re-render */
+        scoreAndSort(allData);
+        buildDropdownValues();
+        FILTER_KEYS.forEach(function(k) { buildDropdown(k, DROPDOWN_LABELS[k]); });
+        doSearch(currentPage);
+        setMoreBadge(null);
+      })();
+    }
+
+  } catch(err) {
+    console.error(err);
+    document.getElementById('loading-msg').textContent = 'Error: ' + err.message;
+    document.getElementById('rt-badge').className  = 'rt-badge disconnected';
+    document.getElementById('rt-label').textContent = 'Sin conexión';
+  }
+}
 function applyFilters() {
   var q = document.getElementById('search').value.trim().toLowerCase();
   return allData.filter(function(p) {
@@ -787,7 +933,7 @@ function buildDropdown(id, defaultLabel) {
 /* ================================================================
    CLOSE DROPDOWNS
 ================================================================ */
-var ALL_DROPDOWN_IDS = ['cat_madre','cat_line','line_offer','line_focus','export'];
+var ALL_DROPDOWN_IDS = ['cat_madre','cat_line','line_offer','line_focus'];
 function closeAll() {
   ALL_DROPDOWN_IDS.forEach(function(k) {
     var p = document.getElementById('dd-' + k + '-panel'); if (p) p.classList.remove('open');
@@ -834,10 +980,15 @@ function buildHeader() {
   var head = document.getElementById('tbl-head'); head.innerHTML = '';
   var cols = getVisibleColumns();
   var totalW = cols.reduce(function(a, c) { return a + c.w; }, 0);
-  head.style.cssText = 'display:flex;background:linear-gradient(90deg,#5a0000,#800000);position:sticky;top:0;z-index:10;width:' + totalW + 'px;min-width:' + totalW + 'px;';
+  head.style.cssText = 'display:flex;background:linear-gradient(90deg,#5a0000,#800000);position:sticky;top:0;z-index:10;min-width:' + totalW + 'px;width:100%;';
   cols.forEach(function(col) {
     var d = document.createElement('div');
-    d.style.cssText = 'flex:0 0 ' + col.w + 'px;width:' + col.w + 'px;display:flex;align-items:center;justify-content:center;text-align:center;padding:7px 4px;font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:white;border-right:1px solid rgba(255,255,255,.1);overflow:hidden;word-break:break-word;line-height:1.25;box-sizing:border-box;';
+    var base = 'display:flex;align-items:center;justify-content:center;text-align:center;padding:7px 4px;font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:white;border-right:1px solid rgba(255,255,255,.1);overflow:hidden;word-break:break-word;line-height:1.25;box-sizing:border-box;';
+    if (col.grow) {
+      d.style.cssText = 'flex:1;min-width:' + col.w + 'px;' + base;
+    } else {
+      d.style.cssText = 'flex:0 0 ' + col.w + 'px;width:' + col.w + 'px;' + base;
+    }
     d.textContent = col.label;
     head.appendChild(d);
   });
@@ -893,10 +1044,11 @@ function makeImageCell(val) {
 /* ================================================================
    GENERIC CELL
 ================================================================ */
-function makeCell(content, w, alignLeft, isFunciones, fullText) {
+function makeCell(content, w, alignLeft, isFunciones, fullText, grow) {
   var d = document.createElement('div');
   var jc = alignLeft ? 'flex-start' : 'center'; var ta = alignLeft ? 'left' : 'center';
-  d.style.cssText = 'flex:0 0 ' + w + 'px;width:' + w + 'px;display:flex;align-items:' + (isFunciones ? 'flex-start' : 'center') + ';justify-content:' + jc + ';text-align:' + ta + ';padding:' + (isFunciones ? '6px 8px' : '5px 5px') + ';font-size:.72rem;box-sizing:border-box;overflow:hidden;border-right:1px solid #f0f0f0;height:100%;';
+  var flexPart = grow ? 'flex:1;min-width:' + w + 'px;' : 'flex:0 0 ' + w + 'px;width:' + w + 'px;';
+  d.style.cssText = flexPart + 'display:flex;align-items:' + (isFunciones ? 'flex-start' : 'center') + ';justify-content:' + jc + ';text-align:' + ta + ';padding:' + (isFunciones ? '6px 8px' : '5px 5px') + ';font-size:.72rem;box-sizing:border-box;overflow:hidden;border-right:1px solid #f0f0f0;height:100%;';
   if (isFunciones) {
     var inner = document.createElement('div');
     inner.className = 'func-cell';
@@ -922,19 +1074,19 @@ function render() {
   var frag = document.createDocumentFragment();
   currentData.forEach(function(p) {
     var row = document.createElement('div'); row.className = 'tbl-row';
-    row.style.cssText = 'display:flex;width:' + totalW + 'px;min-width:' + totalW + 'px;border-bottom:1px solid #e8e8e8;height:60px;max-height:60px;overflow:hidden;align-items:center;';
+    row.style.cssText = 'display:flex;width:100%;min-width:' + totalW + 'px;border-bottom:1px solid #e8e8e8;height:60px;max-height:60px;overflow:hidden;align-items:center;';
     cols.forEach(function(col) {
       var val = p[col.field];
       if (col.image) { row.appendChild(makeImageCell(val)); return; }
       if (col.price) {
         var html = (val === undefined || val === null || val === '') ? "<span class='price p-zero'>-</span>" : formatPrice(val, col.cls);
-        row.appendChild(makeCell(html, col.w, false, false, null)); return;
+        row.appendChild(makeCell(html, col.w, false, false, null, false)); return;
       }
       var isFunciones = !!col.funciones;
       var rawTxt = (val === undefined || val === null || val === '') ? '' : String(val).trim();
       var txt = rawTxt || '-';
       if (!isFunciones && txt.length > 140) txt = txt.substring(0, 140) + '...';
-      row.appendChild(makeCell(txt, col.w, !!col.alignLeft, isFunciones, isFunciones ? rawTxt : null));
+      row.appendChild(makeCell(txt, col.w, !!col.alignLeft, isFunciones, isFunciones ? rawTxt : null, !!col.grow));
     });
     frag.appendChild(row);
   });
@@ -961,30 +1113,110 @@ function paginate() {
 }
 
 /* ================================================================
-   EXPORT
+   EXPORT MODAL
 ================================================================ */
-document.getElementById('btn-export').addEventListener('click', function(e) {
-  e.stopPropagation(); var p = document.getElementById('dd-export-panel'); closeAll(); p.classList.toggle('open');
+function getExportColumns(mode) {
+  var base = ALL_COLUMNS.filter(function(c) { return !c.price && !c.image; });
+  var mlCols    = ALL_COLUMNS.filter(function(c) { return c.price && c.group === 'ml'; });
+  var propioCols= ALL_COLUMNS.filter(function(c) { return c.price && PROPIO_BY_ROLE[currentRole] && PROPIO_BY_ROLE[currentRole].indexOf(c.field) !== -1; });
+  var canalCols = ALL_COLUMNS.filter(function(c) { return c.price && CANAL_BY_ROLE[currentRole] && CANAL_BY_ROLE[currentRole].indexOf(c.field) !== -1; });
+  var allPriceCols = ALL_COLUMNS.filter(function(c) { return c.price; });
+
+  if (mode === 'visible')     return getVisibleColumns().filter(function(c) { return !c.image; });
+  if (mode === 'base')        return base;
+  if (mode === 'ml')          return base.concat(mlCols);
+  if (mode === 'propio')      return base.concat(propioCols);
+  if (mode === 'canal')       return base.concat(canalCols);
+  if (mode === 'all_prices')  return base.concat(allPriceCols);
+  return base;
+}
+
+document.getElementById('btn-export').addEventListener('click', function() {
+  document.getElementById('exp-filtered-count').textContent = applyFilters().length + ' productos';
+  document.getElementById('exp-all-count').textContent = allData.length + ' productos';
+  document.getElementById('export-modal').classList.add('active');
 });
-document.getElementById('exp-excel').addEventListener('click', async function() {
-  showToast('Preparando Excel...', 'update');
-  var rows = applyFilters(); var cols = getVisibleColumns().filter(function(c) { return !c.image; });
-  var data = rows.map(function(p) { var obj = {}; cols.forEach(function(c) { obj[c.label] = p[c.field] !== undefined ? p[c.field] : ''; }); return obj; });
-  var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Productos');
-  XLSX.writeFile(wb, 'catalogo_hikvision.xlsx'); closeAll();
-});
-document.getElementById('exp-csv').addEventListener('click', async function() {
-  showToast('Preparando CSV...', 'update');
-  var rows = applyFilters(); var cols = getVisibleColumns().filter(function(c) { return !c.image; });
-  var data = rows.map(function(p) { var obj = {}; cols.forEach(function(c) { obj[c.label] = p[c.field] !== undefined ? p[c.field] : ''; }); return obj; });
-  if (data.length) {
+document.getElementById('exp-modal-close').addEventListener('click',  function() { document.getElementById('export-modal').classList.remove('active'); });
+document.getElementById('exp-modal-cancel').addEventListener('click', function() { document.getElementById('export-modal').classList.remove('active'); });
+
+document.getElementById('exp-modal-run').addEventListener('click', function() {
+  var fmt     = document.querySelector('input[name="exp-fmt"]:checked').value;
+  var colMode = document.querySelector('input[name="exp-cols"]:checked').value;
+  var rowMode = document.querySelector('input[name="exp-rows"]:checked').value;
+
+  var rows = rowMode === 'all' ? allData : applyFilters();
+  var cols = getExportColumns(colMode);
+
+  document.getElementById('export-modal').classList.remove('active');
+
+  if (fmt === 'xlsx') {
+    showToast('Preparando Excel...', 'update');
+    var data = rows.map(function(p) { var o = {}; cols.forEach(function(c) { o[c.label] = p[c.field] !== undefined ? p[c.field] : ''; }); return o; });
+    var ws = XLSX.utils.json_to_sheet(data); var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Productos');
+    XLSX.writeFile(wb, 'catalogo_hikvision.xlsx');
+
+  } else if (fmt === 'csv') {
+    showToast('Preparando CSV...', 'update');
     var keys = cols.map(function(c) { return c.label; });
-    var csv = keys.join(',') + '\n' + data.map(function(r) {
-      return keys.map(function(k) { var v = String(r[k] || ''); return (v.indexOf(',') !== -1 || v.indexOf('"') !== -1) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(',');
+    var csv = keys.join(',') + '\n' + rows.map(function(p) {
+      return keys.map(function(k) {
+        var c = cols.find(function(col) { return col.label === k; });
+        var v = String(c && p[c.field] !== undefined ? p[c.field] : '');
+        return (v.indexOf(',') !== -1 || v.indexOf('"') !== -1) ? '"' + v.replace(/"/g, '""') + '"' : v;
+      }).join(',');
     }).join('\n');
-    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' })); a.download = 'catalogo_hikvision.csv'; a.click();
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'catalogo_hikvision.csv'; a.click();
+
+  } else if (fmt === 'pdf') {
+    var PDF_MAX = 500;
+    if (rows.length > PDF_MAX) {
+      showToast('PDF limitado a ' + PDF_MAX + ' filas. Usá Excel para exportar todo.', 'error');
+      rows = rows.slice(0, PDF_MAX);
+    }
+    showToast('Preparando PDF (' + rows.length + ' productos)...', 'update');
+    var colsToPrint = cols.slice(0, 14);
+    var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Catálogo Hikvision</title><style>'
+      + '*{box-sizing:border-box;margin:0;padding:0}'
+      + 'body{font-family:Arial,sans-serif;font-size:8px;color:#111;padding:12px}'
+      + 'h2{color:#800000;font-size:13px;margin-bottom:6px}'
+      + '.meta{font-size:7px;color:#888;margin-bottom:10px}'
+      + 'table{border-collapse:collapse;width:100%;table-layout:fixed}'
+      + 'th{background:#800000;color:#fff;padding:5px 3px;text-align:center;font-size:6.5px;word-break:break-word;line-height:1.3}'
+      + 'td{padding:3px;border-bottom:1px solid #eee;vertical-align:top;word-break:break-word;font-size:7px;line-height:1.35}'
+      + 'tr:nth-child(even) td{background:#fafafa}'
+      + '@media print{@page{size:landscape A4;margin:8mm}html,body{height:auto}}'
+      + '</style></head><body>'
+      + '<h2>Catálogo de Productos Hikvision</h2>'
+      + '<div class="meta">Exportado el ' + new Date().toLocaleDateString('es-AR')
+      + ' &nbsp;·&nbsp; ' + rows.length + ' productos'
+      + ' &nbsp;·&nbsp; Columnas: ' + colsToPrint.map(function(c){return c.label;}).join(', ') + '</div>'
+      + '<table><thead><tr>' + colsToPrint.map(function(c){return '<th>'+c.label+'</th>';}).join('') + '</tr></thead><tbody>'
+      + rows.map(function(p){
+          return '<tr>' + colsToPrint.map(function(c){
+            var v = p[c.field]; v = (v===undefined||v===null) ? '' : String(v);
+            return '<td>'+v.replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</td>';
+          }).join('') + '</tr>';
+        }).join('')
+      + '</tbody></table></body></html>';
+
+    var old = document.getElementById('_pdf_frame');
+    if (old) old.remove();
+    var iframe = document.createElement('iframe');
+    iframe.id = '_pdf_frame';
+    iframe.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;border:none;';
+    document.body.appendChild(iframe);
+    var blob = new Blob([html], {type:'text/html;charset=utf-8'});
+    var blobUrl = URL.createObjectURL(blob);
+    iframe.src = blobUrl;
+    iframe.onload = function() {
+      setTimeout(function() {
+        try { iframe.contentWindow.focus(); iframe.contentWindow.print(); } catch(e) { window.print(); }
+        setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 3000);
+      }, 300);
+    };
   }
-  closeAll();
 });
 
 /* ================================================================
@@ -1148,34 +1380,6 @@ document.getElementById('btn-run-import').addEventListener('click', async functi
   showToast(ok + ' productos actualizados en Supabase', '');
   doSearch(currentPage);
 });
-
-/* ================================================================
-   START
-================================================================ */
-async function start() {
-  try {
-    var res = await Promise.all([fetchAllProducts(), fetchPricebook()]);
-    var products = res[0], pbMap = res[1]; allData = products;
-    if (Object.keys(pbMap).length) {
-      allData.forEach(function(p) {
-        if (!p.funciones || String(p.funciones).trim() === '') {
-          var sap = String(p.sap || '').trim(); if (sap && pbMap[sap]) p.funciones = pbMap[sap];
-        }
-      });
-    }
-    buildDropdownValues();
-    FILTER_KEYS.forEach(function(k) { buildDropdown(k, DROPDOWN_LABELS[k]); });
-    doSearch(1);
-    document.getElementById('loading-bar').classList.remove('active');
-    document.getElementById('rt-badge').className  = 'rt-badge connected';
-    document.getElementById('rt-label').textContent = 'Conectado';
-  } catch(err) {
-    console.error(err);
-    document.getElementById('loading-msg').textContent = 'Error: ' + err.message;
-    document.getElementById('rt-badge').className  = 'rt-badge disconnected';
-    document.getElementById('rt-label').textContent = 'Sin conexión';
-  }
-}
 
 window.addEventListener('load', function() { initSupabase(); });
 </script>
